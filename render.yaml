@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: bloomcart
+    env: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn bloomcart_project.wsgi:con" # Apne wsgi file ka naam check kar lein
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.0
