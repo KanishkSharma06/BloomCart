@@ -54,18 +54,17 @@ MIDDLEWARE = [
 # ==============================================================================
 # DATABASE & URLS (Optimized connection persistence)
 # ==============================================================================
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'bloomcart_db',
-        'USER': 'postgres',
-        'PASSWORD': 'Kanishk@13',
-        'HOST': 'localhost',
-        'PORT': '5432',
-        'CONN_MAX_AGE': 60,  # <-- NEW: Database connections ko persist rakhta hai taaki har request par reconnect na karna pade (Speed boost!)
-    }
-}
+import dj_database_url
 
+# ==============================================================================
+# DATABASE & URLS (Auto-switch between Local and Render Production)
+# ==============================================================================
+DATABASES = {
+    'default': dj_database_url.config(
+        default=os.getenv('DATABASE_URL', f"postgres://postgres:Kanishk@13@localhost:5432/bloomcart_db"),
+        conn_max_age=60
+    )
+}
 ROOT_URLCONF = 'bloomcart_project.urls'
 
 # ==============================================================================
