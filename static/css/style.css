@@ -1,0 +1,48 @@
+/* Import a modern font */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+:root {
+    --primary: #00cec9;
+    --dark: #2d3436;
+    --pastel: #fdfcf8; /* Aapka naya Pastel Background */
+    --footer-dark: #1a1a1a;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    background-color: #fdfcf8 !important; 
+    min-height: 100vh;
+    margin: 0;
+}
+/* White cards ko Pastel background pe highlight karne ke liye */
+.product-card, .bg-white {
+    background-color: #ffffff !important;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+/* ... (Aapke baaki styles waise hi rahengi) ... */
+
+/* Modern Dark Footer Styling */
+.footer-dark {
+    background-color: #1a1a1a !important;
+    color: #ffffff !important;
+    padding: 3rem 0;
+    margin-top: auto;
+}
+
+.footer-dark h3 { color: #ffffff; font-weight: 600; }
+.footer-dark a { color: #b0b0b0; text-decoration: none; transition: 0.3s; }
+.footer-dark a:hover { color: #ffffff; }
+
+/* Product Card Layout Fixes */
+.product-card {
+    width: 100%; /* Grid ke hisaab se width auto rakhein */
+    height: auto;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    border-radius: 12px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    background-color: #ffffff;
+}

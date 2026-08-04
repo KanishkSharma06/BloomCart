@@ -1,0 +1,47 @@
+{% extends 'store/base.html' %}
+
+{% block content %}
+<h1>Products in {{ category_name }}</h1>
+
+<div class="product-grid" style="display: flex; flex-wrap: wrap; gap: 20px;">
+    {% for product in products %}
+        <div class="product-card" style="border: 1px solid #ccc; padding: 10px; width: 200px;">
+            <h3>{{ product.name }}</h3>
+            <p>₹{{ product.price }}</p>
+            <a href="{% url 'product_detail' product.id %}">View Details</a>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+<div class="flex">
+    <!-- LEFT SIDEBAR: Filters (Only for Price/Others) -->
+    <aside class="w-64 p-6 bg-white border-r">
+        <form method="GET" action="."> <!-- '.' ka matlab isi page par filter apply hoga -->
+            <h2 class="text-lg font-bold mb-4">Filter Products</h2>
+            
+            <div class="mb-6">
+                <p class="font-semibold mb-2">Price Range</p>
+                <input type="number" name="min_price" placeholder="Min Price" class="w-full p-2 border rounded mb-2">
+                <input type="number" name="max_price" placeholder="Max Price" class="w-full p-2 border rounded">
+            </div>
+
+            <button type="submit" class="w-full bg-black text-white py-2 rounded">Apply Filters</button>
+            <a href="." class="block text-center mt-3 text-sm text-gray-500 underline">Clear Filters</a>
+        </form>
+    </aside>
+
+    <!-- RIGHT SIDE: Products Grid -->
+    <main class="flex-1 p-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {% for product in products %}
+                <!-- Aapka product card yahan aayega -->
+                <div class="border rounded-lg p-4">
+                    <img src="{{ product.image_url }}" class="h-40 w-full object-contain mb-2">
+                    <h3 class="font-bold">{{ product.product_title }}</h3>
+                    <p class="text-indigo-600">₹{{ product.price }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    </main>
+</div>

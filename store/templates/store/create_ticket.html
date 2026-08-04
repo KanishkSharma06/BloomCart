@@ -1,0 +1,32 @@
+{% extends 'store/base.html' %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-8">
+    <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">Contact Support</h2>
+        <p class="text-sm text-gray-500 mb-6">Raising query regarding Order <span class="font-mono font-semibold text-gray-800">#{{ order.id }}</span></p>
+
+        <form method="POST" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">Subject / Issue Title</label>
+                <input type="text" name="subject" required placeholder="e.g., Delay in delivery or Damaged item" class="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">Describe your issue</label>
+                <textarea name="message" rows="4" required placeholder="Type your message here..." class="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"></textarea>
+            </div>
+
+            <div class="flex gap-3 pt-2">
+                <button type="submit" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow transition">
+                    Start Chat / Submit Ticket
+                </button>
+                <a href="{% url 'my_orders' %}" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold rounded-lg transition">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

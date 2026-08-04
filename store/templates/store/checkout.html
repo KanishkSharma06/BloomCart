@@ -1,0 +1,218 @@
+{% extends 'store/base.html' %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-950 py-10 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-6xl mx-auto">
+        
+        <!-- Page Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-extrabold text-white tracking-tight">Secure Checkout</h1>
+            <p class="text-sm text-gray-400 mt-1">Review your items and complete your purchase securely.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- Left Side: Shipping & Address Details (7 Cols) -->
+            <div class="lg:col-span-7 bg-gray-900 border border-gray-800 rounded-2xl p-6 sm:p-8 shadow-xl">
+                <form id="checkout-form" method="POST">
+                    {% csrf_token %}
+                    
+                    <!-- Section Header & Manage Link -->
+                    <div class="flex items-center justify-between pb-4 mb-6 border-b border-gray-800">
+                        <div class="flex items-center space-x-2">
+                            <span class="flex items-center justify-center w-7 h-7 rounded-full bg-teal-500/10 text-teal-400 text-xs font-bold">1</span>
+                            <h2 class="text-lg font-bold text-white">Shipping Information</h2>
+                        </div>
+                        <a href="{% url 'user_profile' %}" target="_blank" class="inline-flex items-center text-xs font-semibold text-teal-400 hover:text-teal-300 transition">
+                            <span>Manage Addresses</span>
+                            <svg class="w-3.5 h-3.5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                            </svg>
+                        </a>
+                    </div>
+
+                    <!-- Quick Select Saved Address Dropdown -->
+                    {% if saved_addresses %}
+                    <div class="mb-6 p-4 bg-gray-800/60 border border-gray-700/60 rounded-xl">
+                        <label class="block text-xs font-bold text-teal-400 uppercase tracking-wider mb-2">⚡ Switch Saved Address</label>
+                        <select id="savedAddressSelect" class="w-full px-3.5 py-2.5 rounded-xl bg-gray-800 text-white text-sm border border-gray-700 focus:outline-none focus:border-teal-500 transition" onchange="fillAddress(this)">
+                            <option value="">-- Select from saved addresses --</option>
+                            {% for addr in saved_addresses %}
+                                <option value="" 
+                                        data-name="{{ addr.full_name }}" 
+                                        data-phone="{{ addr.phone }}" 
+                                        data-line="{{ addr.address_line }}" 
+                                        data-city="{{ addr.city }}" 
+                                        data-pincode="{{ addr.pincode }}">
+                                    {{ addr.address_type }}: {{ addr.address_line }}, {{ addr.city }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% else %}
+                    <div class="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl flex items-center justify-between">
+                        <p class="text-xs text-yellow-300">No saved address found. Please add an address to proceed.</p>
+                        <a href="{% url 'user_profile' %}" target="_blank" class="text-xs font-bold text-teal-400 underline">Add Now</a>
+                    </div>
+                    {% endif %}
+
+                    <!-- Locked Information Inputs -->
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between items-center mb-1.5">
+                                <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Full Name</label>
+                                <span class="text-[10px] text-gray-500 bg-gray-800 px-2 py-0.5 rounded">Locked</span>
+                            </div>
+                            <input type="text" name="full_name" id="fullName" value="{{ default_address.full_name|default:user.get_full_name }}" readonly 
+                                   class="w-full px-4 py-3 rounded-xl bg-gray-800/80 text-gray-300 text-sm border border-gray-700/80 cursor-not-allowed select-none">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-center mb-1.5">
+                                <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Delivery Address</label>
+                                <span class="text-[10px] text-gray-500 bg-gray-800 px-2 py-0.5 rounded">Locked</span>
+                            </div>
+                            <textarea name="address" id="addressLine" readonly rows="2" 
+                                      class="w-full px-4 py-3 rounded-xl bg-gray-800/80 text-gray-300 text-sm border border-gray-700/80 cursor-not-allowed select-none resize-none">{% if default_address %}{{ default_address.address_line }}, {{ default_address.city }} - {{ default_address.pincode }}{% endif %}</textarea>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-center mb-1.5">
+                                <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Phone Number</label>
+                                <span class="text-[10px] text-gray-500 bg-gray-800 px-2 py-0.5 rounded">Locked</span>
+                            </div>
+                            <input type="text" name="phone" id="phone" value="{{ default_address.phone|default:profile.phone }}" readonly 
+                                   class="w-full px-4 py-3 rounded-xl bg-gray-800/80 text-gray-300 text-sm border border-gray-700/80 cursor-not-allowed select-none">
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Right Side: Order Summary & Action (5 Cols) -->
+            <div class="lg:col-span-5 bg-gray-900 border border-gray-800 rounded-2xl p-6 sm:p-8 shadow-xl sticky top-6">
+                <div class="flex items-center space-x-2 pb-4 mb-6 border-b border-gray-800">
+                    <span class="flex items-center justify-center w-7 h-7 rounded-full bg-teal-500/10 text-teal-400 text-xs font-bold">2</span>
+                    <h2 class="text-lg font-bold text-white">Order Summary</h2>
+                </div>
+
+                <!-- Items Stack -->
+                <div class="space-y-4 max-h-48 overflow-y-auto pr-1 custom-scrollbar mb-6">
+                    {% for item in cart_items %}
+                    <div class="flex justify-between items-center text-sm py-2 border-b border-gray-800/50 last:border-0">
+                        <div class="flex flex-col pr-4">
+                            <span class="text-gray-200 font-medium line-clamp-1">{{ item.product.product_title }}</span>
+                            <span class="text-xs text-gray-400">Qty: {{ item.quantity }}</span>
+                        </div>
+                        <span class="text-gray-200 font-semibold whitespace-nowrap">₹{{ item.product.price }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Promo Code Box -->
+                <div class="mb-6 p-4 bg-gray-800/40 border border-gray-800 rounded-xl">
+                    <h3 class="font-bold text-gray-300 text-xs tracking-wider uppercase mb-3">Apply Promo Code</h3>
+                    <form action="{% url 'apply_coupon' %}" method="POST" class="flex gap-2">
+                        {% csrf_token %}
+                        <input type="text" name="coupon_code" placeholder="Enter coupon code" class="flex-1 px-3.5 py-2.5 text-xs rounded-xl bg-gray-800 text-white border border-gray-700 uppercase font-bold focus:outline-none focus:border-teal-500" required>
+                        <button type="submit" class="px-4 py-2.5 bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold uppercase rounded-xl transition">
+                            Apply
+                        </button>
+                    </form>
+                    {% if request.session.coupon_code %}
+                        <div class="mt-2.5 flex items-center justify-between text-xs">
+                            <span class="text-teal-400 font-bold">Applied: {{ request.session.coupon_code }} ({{ request.session.discount_percentage }}% OFF)</span>
+                            <a href="{% url 'remove_coupon' %}" class="text-red-400 hover:underline">Remove</a>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Cost Breakdown Calculations -->
+                <div class="pt-4 border-t border-gray-800 space-y-2.5">
+                    <div class="flex justify-between text-sm text-gray-400">
+                        <span>Subtotal</span>
+                        <span>₹{{ total_price }}</span>
+                    </div>
+                    {% if discount_amount %}
+                    <div class="flex justify-between text-sm text-teal-400">
+                        <span>Discount ({{ request.session.discount_percentage }}%)</span>
+                        <span>-₹{{ discount_amount }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="flex justify-between text-sm text-gray-400">
+                        <span>Shipping</span>
+                        <span class="text-teal-400 font-medium">Free</span>
+                    </div>
+                    <div class="flex justify-between items-center pt-3 border-t border-gray-800 text-lg font-bold text-white">
+                        <span>Total Amount</span>
+                        <span class="text-2xl text-teal-400">₹{{ final_total|default:total_price }}</span>
+                    </div>
+                </div>
+
+                <!-- Secure Pay Button -->
+                <button type="button" id="rzp-button" 
+                        class="w-full mt-8 py-4 bg-teal-600 hover:bg-teal-500 active:scale-[0.99] text-white font-bold rounded-xl transition-all duration-200 shadow-lg shadow-teal-900/30 flex items-center justify-center space-x-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                    <span>Proceed to Pay ₹{{ final_total|default:total_price }}</span>
+                </button>
+
+                <div class="mt-4 flex items-center justify-center space-x-2 text-[11px] text-gray-500">
+                    <svg class="w-4 h-4 text-teal-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span>Encrypted & Secured by Razorpay</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    // Function to auto-fill address details when switching between saved addresses
+    function fillAddress(selectElement) {
+        const selectedOption = selectElement.options[selectElement.selectedIndex];
+        if(selectedOption.value !== "") {
+            document.getElementById('fullName').value = selectedOption.getAttribute('data-name');
+            document.getElementById('phone').value = selectedOption.getAttribute('data-phone');
+            let fullAddr = selectedOption.getAttribute('data-line') + ", " + selectedOption.getAttribute('data-city') + " - " + selectedOption.getAttribute('data-pincode');
+            document.getElementById('addressLine').value = fullAddr;
+        }
+    }
+
+    var options = {
+        "key": "{{ razorpay_key }}",
+        "amount": "{{ amount }}",
+        "currency": "INR",
+        "order_id": "{{ razorpay_order_id }}",
+        "handler": function (response){
+            fetch("{% url 'verify_payment' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    'razorpay_order_id': response.razorpay_order_id,
+                    'razorpay_payment_id': response.razorpay_payment_id,
+                    'razorpay_signature': response.razorpay_signature
+                })
+            }).then(res => res.json())
+              .then(data => {
+                  if(data.status === 'Success') {
+                      window.location.href = "{% url 'order_success' %}";
+                  } else {
+                      alert("Payment Verification Failed!");
+                  }
+              });
+        }
+    };
+    var rzp1 = new Razorpay(options);
+    document.getElementById('rzp-button').onclick = function(e){
+        rzp1.open();
+        e.preventDefault();
+    }
+</script>
+{% endblock %}

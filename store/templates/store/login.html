@@ -1,0 +1,36 @@
+{% extends 'store/base.html' %}
+{% load socialaccount %}
+
+{% block content %}
+<div class="auth-container" style="max-width: 400px; margin: 40px auto; padding: 30px; background: white; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+    <h2 style="text-align: center; margin-bottom: 25px;">Login</h2>
+    
+    <form method="POST">
+        {% csrf_token %}
+        
+        <div style="margin-bottom: 15px;">
+            <label>Username:</label>
+            <input type="text" name="username" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+            <label>Password:</label>
+            <input type="password" name="password" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+        </div>
+
+        <button type="submit" class="cta-button" style="width: 100%; border: none; cursor: pointer; padding: 10px; margin-bottom: 15px; background-color: var(--primary); color: white; border-radius: 5px;">Sign In</button>
+    </form>
+
+    <div style="text-align: center;">
+        <!-- Updated link for Password Reset -->
+        <p><a href="{% url 'password_reset' %}" style="color: #6c5ce7; text-decoration: none; font-size: 0.9rem;">Forgot your password?</a></p>
+        
+        <div style="margin: 20px 0; border-top: 1px solid #eee; padding-top: 20px;">
+            <p>Or</p>
+            <a href="{% provider_login_url 'google' %}" class="cta-button" style="background: #db4437; color: white; display: block; padding: 10px; text-decoration: none; border-radius: 5px;">Sign in with Google</a>
+        </div>
+        
+        <p style="margin-top: 20px;">New user? <a href="{% url 'register' %}" style="color: #00cec9; font-weight: bold; text-decoration: none;">Create account</a></p>
+    </div>
+</div>
+{% endblock %}

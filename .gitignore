@@ -1,0 +1,11 @@
+bloomcart_project/myenv/
+__pycache__/
+db.sqlite3
+*.pyc
+.env
+media/
+staticfiles/
+*.h5
+*.keras
+*.csv
+chroma_db/

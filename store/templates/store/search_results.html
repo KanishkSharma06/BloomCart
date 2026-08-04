@@ -1,0 +1,299 @@
+{% extends 'store/base.html' %}
+{% load static %}
+
+{% block content %}
+
+<!-- ==========================================
+      CLEAN BREADCRUMB & ACTIVE FILTERS BAR
+      ========================================== -->
+<div class="bg-white/90 backdrop-blur-md border-b border-gray-100 py-3.5 sticky top-[60px] z-30 shadow-2xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+        
+        <!-- Left: Search text & count -->
+        <div class="flex items-center gap-3">
+            <div class="text-xs text-gray-500 font-medium">
+                Results for <span class="text-gray-900 font-black tracking-wide">"{{ query|default:'All Collections' }}"</span>
+            </div>
+            <div class="text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-200/60 px-3 py-1 rounded-full shadow-2xs flex items-center gap-1.5">
+                <span>✨</span> <span>{{ page_obj.paginator.count|default:"0" }} items found</span>
+            </div>
+        </div>
+
+        <!-- Right: Active Filter Pills & Mobile Filter Toggle -->
+        <div class="flex items-center gap-2 flex-wrap w-full md:w-auto justify-between md:justify-end">
+            
+            <!-- Active Filter Badges -->
+            <div class="flex items-center gap-1.5 flex-wrap">
+                {% if selected_category %}
+                    <a href="?query={{ query }}{% if selected_brand %}&brand={{ selected_brand }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" class="inline-flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-800 text-[10px] font-bold px-2.5 py-1 rounded-lg transition">
+                        Cat: {{ selected_category }} <span class="text-rose-500 font-black">×</span>
+                    </a>
+                {% endif %}
+                {% if selected_brand %}
+                    <a href="?query={{ query }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" class="inline-flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-800 text-[10px] font-bold px-2.5 py-1 rounded-lg transition">
+                        Brand: {{ selected_brand }} <span class="text-rose-500 font-black">×</span>
+                    </a>
+                {% endif %}
+                {% if min_price or max_price %}
+                    <a href="?query={{ query }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_brand %}&brand={{ selected_brand }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" class="inline-flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-800 text-[10px] font-bold px-2.5 py-1 rounded-lg transition">
+                        Price Range <span class="text-rose-500 font-black">×</span>
+                    </a>
+                {% endif %}
+            </div>
+
+            <!-- Mobile Filter Toggle Button -->
+            <button onclick="toggleMobileSidebar()" class="lg:hidden flex items-center gap-1.5 bg-gray-900 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm">
+                <span>⚙️</span> Filters
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================
+      MAIN LAYOUT
+      ========================================== -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-8 relative">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+        
+        <!-- ==========================================
+              SIDEBAR (DESKTOP & MOBILE DRAWER)
+              ========================================== -->
+        <aside id="filterSidebar" class="fixed inset-y-0 left-0 z-50 w-80 bg-white p-6 shadow-2xl transform -translate-x-full lg:translate-x-0 lg:static lg:z-auto lg:w-full lg:col-span-1 lg:bg-white lg:border lg:border-gray-200/80 lg:rounded-3xl lg:p-5 lg:shadow-lg lg:shadow-gray-100 lg:sticky lg:top-28 flex flex-col transition-transform duration-300 ease-in-out max-h-screen lg:max-h-[calc(100vh-140px)] overflow-y-auto lg:overflow-visible">
+            
+            <!-- Mobile Close Header -->
+            <div class="flex items-center justify-between pb-4 border-b border-gray-100 flex-shrink-0">
+                <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-5 bg-gradient-to-b from-amber-400 to-amber-600 rounded-full"></span>
+                    <h3 class="font-black text-gray-900 text-xs tracking-wider uppercase">Filters & Sort</h3>
+                </div>
+                <div class="flex items-center gap-2">
+                    <a href="{% url 'search_results' %}?query={{ query }}" class="text-[11px] font-bold text-rose-500 hover:text-rose-600 transition bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded-lg">Clear All</a>
+                    <button onclick="toggleMobileSidebar()" class="lg:hidden text-gray-500 hover:text-gray-900 text-base font-bold p-1">✕</button>
+                </div>
+            </div>
+
+            <!-- Scrollable Body Content Inside Sidebar -->
+            <div class="overflow-y-auto pr-1 py-4 space-y-5 custom-scrollbar flex-grow">
+                <form method="GET" action="{% url 'search_results' %}" id="filterForm" class="space-y-5">
+                    <input type="hidden" name="query" value="{{ query }}">
+
+                    <!-- 1. SORT BY -->
+                    <div class="space-y-2">
+                        <label class="text-[11px] font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
+                            <span>⚡</span> Sort By
+                        </label>
+                        <div class="relative">
+                            <select name="sort" onchange="this.form.submit()" class="w-full bg-gray-50/80 border border-gray-200 text-gray-800 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-amber-500 focus:bg-white font-medium cursor-pointer transition shadow-2xs">
+                                <option value="featured" {% if request.GET.sort == 'featured' %}selected{% endif %}>Featured Products</option>
+                                <option value="price_low" {% if request.GET.sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+                                <option value="price_high" {% if request.GET.sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+                                <option value="newest" {% if request.GET.sort == 'newest' %}selected{% endif %}>Newest Arrivals</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 2. CATEGORY FILTER -->
+                    <div class="pt-4 border-t border-gray-100 space-y-2">
+                        <h4 class="text-[11px] font-bold text-gray-700 uppercase tracking-wider">Categories</h4>
+                        <div class="space-y-1 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
+                            <a href="{% url 'search_results' %}?query={{ query }}" class="flex items-center justify-between text-xs transition px-3 py-2 rounded-xl {% if not selected_category %}font-bold bg-amber-50 text-amber-900 border border-amber-200/60 shadow-2xs{% else %}text-gray-600 hover:bg-gray-50 hover:text-gray-900{% endif %}">
+                                <span>All Categories</span>
+                                <span class="text-[10px]">✨</span>
+                            </a>
+                            {% for cat in categories %}
+                                <a href="{% url 'search_results' %}?query={{ query }}&category={{ cat }}" class="flex items-center justify-between text-xs transition px-3 py-2 rounded-xl truncate {% if cat == selected_category %}font-bold bg-amber-50 text-amber-900 border border-amber-200/60 shadow-2xs{% else %}text-gray-600 hover:bg-gray-50 hover:text-gray-900{% endif %}">
+                                    <span class="truncate">• {{ cat }}</span>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- 3. BRANDS FILTER -->
+                    <div class="pt-4 border-t border-gray-100 space-y-2">
+                        <h4 class="text-[11px] font-bold text-gray-700 uppercase tracking-wider">Brands</h4>
+                        <div class="space-y-1 max-h-36 overflow-y-auto pr-1 custom-scrollbar">
+                            {% for b in brands %}
+                                <label class="flex items-center justify-between cursor-pointer text-xs text-gray-700 hover:text-gray-900 select-none p-2 rounded-lg hover:bg-gray-50 transition">
+                                    <span class="truncate font-medium">{{ b }}</span>
+                                    <input type="checkbox" name="brand" value="{{ b }}" {% if b == selected_brand %}checked{% endif %} onchange="this.form.submit()" class="rounded text-amber-500 focus:ring-amber-400 w-4 h-4 border-gray-300 cursor-pointer">
+                                </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- 4. PRICE RANGE FILTER -->
+                    <div class="pt-4 border-t border-gray-100 space-y-2.5">
+                        <h4 class="text-[11px] font-bold text-gray-700 uppercase tracking-wider">Price Range (₹)</h4>
+                        <div class="flex items-center gap-2">
+                            <input type="number" name="min_price" value="{{ min_price }}" placeholder="Min" class="w-1/2 p-2.5 bg-gray-50/80 border border-gray-200 rounded-xl text-xs focus:outline-none focus:border-amber-500 focus:bg-white font-medium">
+                            <input type="number" name="max_price" value="{{ max_price }}" placeholder="Max" class="w-1/2 p-2.5 bg-gray-50/80 border border-gray-200 rounded-xl text-xs focus:outline-none focus:border-amber-500 focus:bg-white font-medium">
+                        </div>
+                        <button type="submit" class="w-full bg-gray-900 hover:bg-amber-500 hover:text-gray-950 text-white font-bold py-2.5 rounded-xl text-xs transition shadow-md cursor-pointer tracking-wide">Apply Price</button>
+                    </div>
+
+                    <!-- 5. STOCK CHECKBOX -->
+                    <div class="pt-4 border-t border-gray-100">
+                        <label class="flex items-center justify-between cursor-pointer text-xs text-gray-700 select-none bg-gray-50/80 p-3 rounded-xl border border-gray-100 hover:bg-amber-50/40 transition">
+                            <span class="font-bold text-gray-800">Include Out of Stock</span>
+                            <input type="checkbox" name="availability" value="in_stock" {% if availability %}checked{% endif %} onchange="this.form.submit()" class="rounded text-amber-500 focus:ring-amber-400 w-4 h-4 border-gray-300 cursor-pointer">
+                        </label>
+                    </div>
+                </form>
+            </div>
+        </aside>
+
+        <!-- Backdrop overlay for mobile drawer -->
+        <div id="sidebarBackdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-black/50 z-40 hidden lg:hidden transition-opacity"></div>
+
+        <!-- ==========================================
+              STYLISH PRODUCTS GRID (3 COLS)
+              ========================================== -->
+        <main class="w-full lg:col-span-3">
+            {% if page_obj %}
+                <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-5">
+                    {% for item in page_obj %}
+                        <div class="bg-white border border-gray-200/70 hover:border-amber-400 hover:shadow-2xl transition-all duration-300 rounded-3xl p-4 flex flex-col relative group overflow-hidden">
+                            
+                            <!-- Creative Dynamic Badges -->
+                            {% if forloop.counter0 == 0 or forloop.counter0 == 4 %}
+                                <span class="absolute top-3 left-3 bg-gradient-to-r from-red-600 to-rose-500 text-white text-[9px] font-black px-2.5 py-1 rounded-lg shadow-sm uppercase tracking-wider z-10 animate-pulse">🔥 Trending</span>
+                            {% elif forloop.counter0 == 2 %}
+                                <span class="absolute top-3 left-3 bg-gradient-to-r from-emerald-600 to-teal-500 text-white text-[9px] font-black px-2.5 py-1 rounded-lg shadow-sm uppercase tracking-wider z-10">💸 Best Deal</span>
+                            {% endif %}
+
+                            <!-- Wishlist Floating Icon with Smooth Scale -->
+                            <form action="{% url 'add_to_wishlist' item.uniq_id %}" method="POST" class="absolute top-3 right-3 z-10">
+                                {% csrf_token %}
+                                <button type="submit" class="w-8 h-8 bg-white/95 backdrop-blur-md rounded-full border border-gray-200 flex items-center justify-center text-gray-400 hover:text-rose-500 hover:scale-125 shadow-sm text-xs transition-all duration-300">❤️</button>
+                            </form>
+
+                            <!-- Clickable Card Area for Product Detail -->
+                            <a href="{% url 'product_detail' item.uniq_id %}" class="block flex-grow">
+                                <!-- Image Container with Subtle Zoom -->
+                                <div class="h-52 w-full bg-gradient-to-b from-gray-50/80 to-gray-100/40 flex items-center justify-center p-4 mb-4 rounded-2xl overflow-hidden relative group-hover:from-amber-50/30 group-hover:to-amber-50/10 transition-colors duration-500">
+                                    <img src="{{ item.image_url|cut:' '|cut:'|' }}" alt="{{ item.product_title }}" class="h-full w-full object-contain group-hover:scale-110 transition duration-500 ease-out">
+                                </div>
+
+                                <!-- Details -->
+                                <div class="flex flex-col space-y-2.5">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[10px] text-gray-400 uppercase tracking-widest truncate font-bold">{{ item.brand|default:"BloomCart" }}</span>
+                                        <span class="text-[10px] {% if item.stock > 0 %}text-emerald-600 bg-emerald-50 border border-emerald-200/60{% else %}text-rose-600 bg-rose-50 border border-rose-200/60{% endif %} px-2 py-0.5 rounded-md font-semibold">
+                                            {% if item.stock > 0 %}In Stock{% else %}Sold Out{% endif %}
+                                        </span>
+                                    </div>
+
+                                    <h3 class="font-semibold text-gray-900 text-xs sm:text-sm line-clamp-2 leading-snug group-hover:text-amber-600 transition h-10">
+                                        {{ item.product_title }}
+                                    </h3>
+                                    
+                                    <!-- Rating Stars -->
+                                    <div class="flex items-center gap-1.5 text-xs">
+                                        {% with avg=item.average_rating %}
+                                            {% if avg > 0 %}
+                                                <div class="bg-amber-50 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 border border-amber-200/60 shadow-2xs">
+                                                    ⭐ {{ avg|floatformat:1 }}
+                                                </div>
+                                            {% else %}
+                                                <div class="text-amber-400 text-xs tracking-tight">★★★★☆</div>
+                                            {% endif %}
+                                        {% endwith %}
+                                        <span class="text-gray-400 text-[10px] font-medium">(Verified)</span>
+                                    </div>
+                                </div>
+                            </a>
+
+                            <!-- Bottom Price & Cart Section -->
+                            <div class="mt-auto pt-3 border-t border-gray-100">
+                                <div class="flex items-baseline gap-2 mb-3">
+                                    <span class="text-base font-black text-gray-900">₹{{ item.dynamic_price|default:item.price }}</span>
+                                    {% if item.dynamic_mrp %}
+                                        <span class="text-[11px] line-through text-gray-400 font-medium">₹{{ item.dynamic_mrp }}</span>
+                                    {% endif %}
+                                </div>
+
+                                <div>
+                                    {% if item.stock > 0 %}
+                                        <form action="{% url 'add_to_cart_product' item.uniq_id %}" method="POST">
+                                            {% csrf_token %}
+                                            <button type="submit" class="w-full bg-amber-400 hover:bg-amber-500 active:scale-95 text-gray-950 py-2.5 rounded-xl text-xs font-black transition-all shadow-sm cursor-pointer flex items-center justify-center gap-1.5">
+                                                <span>🛒</span> Add to Cart
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        <button disabled class="w-full bg-gray-100 text-gray-400 py-2.5 rounded-xl text-[11px] font-bold cursor-not-allowed">Sold Out</button>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- ==========================================
+                      NUMBERED PAGINATION CONTROLS
+                      ========================================== -->
+                {% if page_obj.has_other_pages %}
+                    <div class="mt-10 flex items-center justify-center gap-1.5 flex-wrap">
+                        
+                        <!-- Previous Page Button -->
+                        {% if page_obj.has_previous %}
+                            <a href="?query={{ query }}&page={{ page_obj.previous_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_brand %}&brand={{ selected_brand }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" class="px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-700 hover:bg-amber-400 hover:border-amber-400 transition shadow-2xs flex items-center gap-1">
+                                <span>←</span> Prev
+                            </a>
+                        {% endif %}
+
+                        <!-- Page Number Links -->
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <span class="px-3.5 py-2.5 bg-amber-400 text-gray-950 rounded-xl text-xs font-black shadow-md scale-105 transition-transform">
+                                    {{ num }}
+                                </span>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <a href="?query={{ query }}&page={{ num }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_brand %}&brand={{ selected_brand }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" class="px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-700 hover:bg-amber-400 hover:border-amber-400 transition shadow-2xs">
+                                    {{ num }}
+                                </a>
+                            {% endif %}
+                        {% endfor %}
+
+                        <!-- Next Page Button -->
+                        {% if page_obj.has_next %}
+                            <a href="?query={{ query }}&page={{ page_obj.next_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_brand %}&brand={{ selected_brand }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" class="px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-700 hover:bg-amber-400 hover:border-amber-400 transition shadow-2xs flex items-center gap-1">
+                                Next <span>→</span>
+                            </a>
+                        {% endif %}
+
+                    </div>
+                {% endif %}
+
+            {% else %}
+                <div class="bg-white rounded-3xl border border-gray-200/80 p-16 text-center space-y-4 shadow-sm">
+                    <div class="w-20 h-20 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto text-3xl font-bold shadow-sm animate-bounce">🔍</div>
+                    <div class="space-y-1">
+                        <p class="text-sm font-bold text-gray-900">No results found for "{{ query }}"</p>
+                        <p class="text-xs text-gray-500">Try adjusting your filters, checking spelling, or browsing other categories.</p>
+                    </div>
+                    <div class="pt-2">
+                        <a href="{% url 'search_results' %}" class="bg-amber-400 hover:bg-amber-500 text-gray-950 font-black px-6 py-3 rounded-xl text-xs inline-block transition shadow-sm">Reset All Filters</a>
+                    </div>
+                </div>
+            {% endif %}
+        </main>
+
+    </div>
+</div>
+
+<!-- ==========================================
+      JAVASCRIPT FOR MOBILE DRAWER TOGGLE
+      ========================================== -->
+<script>
+    function toggleMobileSidebar() {
+        const sidebar = document.getElementById('filterSidebar');
+        const backdrop = document.getElementById('sidebarBackdrop');
+        
+        sidebar.classList.toggle('-translate-x-full');
+        backdrop.classList.toggle('hidden');
+    }
+</script>
+
+{% endblock %}

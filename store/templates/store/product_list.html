@@ -1,0 +1,54 @@
+{% extends 'store/base.html' %}
+
+{% block content %}
+<div style="padding: 20px;">
+    <h1>Store Products</h1>
+    
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+        <!-- Updated Logic in productlist.html -->
+        {% for product in page_obj %}
+        <div style="...">
+            <img src="{{ product.image_url|cut:' '|cut:'|' }}" alt="{{ product.product_title }}" class="h-full w-full object-contain p-4">>
+            <h3>{{ product.product_title }}</h3>
+            <p>Price: ₹{{ product.price }}</p>
+
+            {% if product.variants.exists %}
+                <!-- Agar variants hain, toh View Details hi dikhayein -->
+                <a href="{% url 'product_detail' product.uniq_id %}" style="...">View Details</a>
+            {% else %}
+                <!-- Agar simple product hai, toh stock check karein -->
+                <!-- Simplified Logic -->
+                {% if product.stock > 0 %}
+                    <!-- Agar stock hai, toh Seedha Add to Cart dikhayein -->
+                    <form action="{% url 'add_to_cart_product' product.uniq_id %}" method="POST">
+                        {% csrf_token %}
+                        <button type="submit" style="background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%;">
+                            Add to Cart
+                        </button>
+                    </form>
+                {% else %}
+                    <!-- Stock 0 hai toh hi Unavailable -->
+                    <button disabled style="background: #ccc; color: #666; border: none; padding: 10px 20px; border-radius: 5px; width: 100%;">
+                        Unavailable
+                    </button>
+                {% endif %}
+
+                <a href="{% url 'product_detail' product.uniq_id %}" style="display: block; margin-top: 10px; color: #007bff; text-decoration: none;">View Details</a>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <div style="margin-top: 40px; text-align: center;">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+        {% endif %}
+        
+        <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}">Next</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,584 @@
+{% extends 'store/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    :root {
+        --bg-main: #f4f6f9;
+        --card-bg: #ffffff;
+        --text-primary: #0f172a;
+        --text-secondary: #64748b;
+        --accent-indigo: #6366f1;
+        --accent-indigo-hover: #4f46e5;
+        --accent-purple: #8b5cf6;
+        --border-color: #e2e8f0;
+    }
+
+    body {
+        background-color: var(--bg-main);
+        color: var(--text-primary);
+    }
+
+    .product-page-container { 
+        max-width: 1320px; 
+        margin: 40px auto; 
+        display: grid; 
+        grid-template-columns: 1.1fr 0.9fr; 
+        gap: 36px; 
+        padding: 0 24px; 
+    }
+
+    .product-left-column {
+        display: flex;
+        flex-direction: column;
+        gap: 28px;
+    }
+
+    .image-container {
+        background: radial-gradient(circle at center, #ffffff 60%, #f1f5f9 100%);
+        border-radius: 32px;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 20px 40px -15px rgba(99, 102, 241, 0.08);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 520px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .product-img-tag { 
+        max-width: 75%; 
+        max-height: 75%; 
+        object-fit: contain; 
+        position: relative;
+        z-index: 2;
+        transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .product-img-tag:hover {
+        transform: scale(1.1) rotate(2deg);
+    }
+
+    .product-details-card {
+        background: var(--card-bg);
+        padding: 40px;
+        border-radius: 32px;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 20px 50px -15px rgba(15, 23, 42, 0.06);
+        height: fit-content;
+    }
+
+    .action-bar { display: flex; gap: 14px; margin: 24px 0; }
+    .btn-cart { 
+        flex: 1; 
+        background: linear-gradient(135deg, var(--accent-indigo) 0%, var(--accent-purple) 100%); 
+        color: #fff; 
+        padding: 18px; 
+        border-radius: 18px; 
+        font-weight: 800; 
+        text-align: center; 
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4);
+    }
+    .btn-cart:hover:not(:disabled) { 
+        transform: translateY(-3px); 
+        box-shadow: 0 15px 30px -5px rgba(99, 102, 241, 0.6); 
+    }
+    .btn-cart:disabled { background: #cbd5e1; cursor: not-allowed; box-shadow: none; }
+    
+    .btn-wish { 
+        background: #fff;
+        border: 1px solid var(--border-color); 
+        padding: 18px 24px; 
+        border-radius: 18px; 
+        color: #f43f5e; 
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .btn-wish:hover { background: #fff1f2; border-color: #fecdd3; transform: translateY(-3px); }
+
+    .review-page-btn.active {
+        background: var(--accent-indigo) !important;
+        color: white !important;
+        border-color: var(--accent-indigo) !important;
+    }
+
+    /* Swiper Navigation Arrows */
+    .similar-swiper-container { position: relative; padding: 0 50px; }
+    .similarSwiper { overflow: hidden; padding: 10px 4px 20px 4px; }
+    
+    .swiper-button-next, .swiper-button-prev { 
+        width: 44px !important; 
+        height: 44px !important; 
+        background: #ffffff !important; 
+        border-radius: 50% !important; 
+        color: #0f172a !important; 
+        box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.1) !important;
+        border: 1px solid #e2e8f0 !important;
+        position: absolute; 
+        top: 50% !important; 
+        transform: translateY(-50%); 
+        z-index: 20;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+
+    .swiper-button-next::after, .swiper-button-prev::after {
+        font-size: 15px !important;
+        font-weight: 900 !important;
+    }
+
+    .swiper-button-prev { left: -6px !important; }
+    .swiper-button-next { right: -6px !important; }
+
+    .swiper-button-next:hover, .swiper-button-prev:hover { 
+        background: #6366f1 !important; 
+        color: #ffffff !important; 
+        border-color: #6366f1 !important;
+        box-shadow: 0 15px 30px -5px rgba(99, 102, 241, 0.4) !important;
+        transform: translateY(-50%) scale(1.08) !important;
+    }
+
+    .swiper-button-disabled {
+        opacity: 0.35 !important;
+        cursor: not-allowed !important;
+        pointer-events: none !important;
+    }
+
+    .mobile-only-section { display: none; }
+    .desktop-only-section { display: block; }
+
+    @media(max-width: 1024px) {
+        .product-page-container { 
+            display: flex;
+            flex-direction: column;
+            gap: 20px; 
+            padding: 0 16px;
+            margin: 20px auto;
+            width: 100%;
+        }
+        .desktop-only-section { display: none !important; }
+        .mobile-only-section { display: block !important; }
+
+        .similar-swiper-container { padding: 0 10px; }
+        .product-details-card { padding: 24px; }
+        .image-container { 
+            height: 360px;
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="product-page-container">
+    
+    <!-- ================= DESKTOP LEFT COLUMN ================= -->
+    <div class="product-left-column desktop-only-section">
+        <div class="image-container flex items-center justify-center">
+            <span class="absolute top-6 left-6 bg-white/95 backdrop-blur-md border border-gray-200 text-gray-900 text-xs font-bold px-4 py-2 rounded-2xl flex items-center gap-2 shadow-2xs z-10">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span> 
+                Brand: <strong class="text-indigo-600">{{ product.brand|default:"BloomCart Luxe" }}</strong>
+            </span>
+            <img class="product-img-tag" id="main-product-img-desk" src="" alt="{{ product.product_title }}">
+        </div>
+
+        <div class="bg-white p-5 sm:p-6 rounded-3xl border border-gray-200/80 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="font-black text-lg text-gray-900 tracking-tight">💬 Customer Reviews</h2>
+                    <p class="text-[11px] text-gray-400 mt-0.5">Verified purchaser feedback</p>
+                </div>
+                <span class="text-[11px] font-black bg-indigo-50 text-indigo-700 border border-indigo-100 px-3 py-1 rounded-full">
+                    ⭐ {{ product.reviews.count|default:0 }} Total
+                </span>
+            </div>
+            
+            <div class="reviews-list-container space-y-3 min-h-[140px]"></div>
+            <div class="reviews-pagination flex items-center justify-between mt-4 pt-3.5 border-t border-gray-100"></div>
+            
+            {% if user.is_authenticated %}
+                <form method="post" action="{% url 'add_review' product.uniq_id %}" class="mt-5 pt-4 border-t border-dashed border-gray-200">
+                    {% csrf_token %}
+                    <h3 class="font-bold text-[11px] uppercase tracking-wider text-gray-800 mb-2.5">✍️ Share Your Experience</h3>
+                    <div class="mb-2.5">
+                        <select name="rating" class="w-full p-3 border border-gray-200 rounded-2xl text-xs bg-slate-50 font-bold focus:outline-none focus:border-indigo-600">
+                            <option value="5">★★★★★ (5/5) - Outstanding Quality</option>
+                            <option value="4">★★★★☆ (4/5) - Very Good</option>
+                            <option value="3">★★★☆☆ (3/5) - Average</option>
+                            <option value="2">★★☆☆☆ (2/5) - Below Average</option>
+                            <option value="1">★☆☆☆☆ (1/5) - Poor</option>
+                        </select>
+                    </div>
+                    <textarea name="comment" required rows="2" placeholder="Tell us what you loved about this product..." class="w-full p-3 border border-gray-200 rounded-2xl mb-2.5 text-xs bg-slate-50 focus:outline-none focus:border-indigo-600"></textarea>
+                    <button type="submit" class="bg-slate-900 hover:bg-indigo-600 text-white w-full py-3 rounded-2xl font-bold text-xs transition cursor-pointer shadow-md">Publish Review</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ================= MOBILE EXACT ORDER ================= -->
+    <div class="mobile-only-section bg-white p-4 rounded-2xl border border-gray-200/80 shadow-2xs flex items-center justify-between">
+        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Brand Name</span>
+        <span class="text-sm font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">
+            {{ product.brand|default:"BloomCart Luxe" }}
+        </span>
+    </div>
+
+    <div class="image-container mobile-only-section flex items-center justify-center">
+        <img class="product-img-tag" id="main-product-img-mob" src="" alt="{{ product.product_title }}">
+    </div>
+
+    <!-- Product Details Card -->
+    <div class="product-details-card">
+        {% if product.stock <= 0 %}
+            <div class="mb-3 inline-flex items-center gap-2 bg-gray-100 border border-gray-300 px-3 py-1 rounded-full text-gray-600 text-[11px] font-extrabold">
+                🚫 Currently Out of Stock
+            </div>
+        {% elif product.stock <= 5 %}
+            <div class="mb-3 inline-flex items-center gap-2 bg-rose-50 border border-rose-100 px-3 py-1 rounded-full text-rose-600 text-[11px] font-extrabold">
+                🔥 Hurry! Only {{ product.stock }} items left.
+            </div>
+        {% else %}
+            <div class="mb-3 inline-flex items-center gap-2 bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-full text-emerald-600 text-[11px] font-extrabold">
+                ✨ In Stock & Ready to Ship
+            </div>
+        {% endif %}
+
+        <h1 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight leading-snug mb-3">
+            {{ product.product_title|escape }}
+        </h1>
+        
+        <!-- Pricing Box -->
+        <div class="my-4 p-4 rounded-2xl bg-gradient-to-br from-slate-50 via-indigo-50/20 to-purple-50/30 border border-indigo-100/60">
+            {% if request.user.is_authenticated and request.user.profile.is_prime %}
+                <div class="flex items-baseline gap-3">
+                    <span class="text-3xl font-black text-indigo-600">₹{{ product.prime_price|default:product.price }}</span>
+                    <span class="bg-amber-400 text-slate-950 text-[10px] font-black px-3 py-1 rounded-full tracking-wider">👑 PRIME PRICE</span>
+                </div>
+            {% else %}
+                <div class="flex items-baseline gap-2">
+                    <span class="text-3xl font-black text-gray-900">₹{{ product.price }}</span>
+                    {% if product.mrp and product.mrp > product.price %}
+                        <span class="text-sm font-bold text-gray-400 line-through">₹{{ product.mrp }}</span>
+                    {% endif %}
+                </div>
+                <div class="mt-3 pt-3 border-t border-slate-200/60 flex items-center justify-between gap-3">
+                    <p class="text-xs font-bold text-gray-900">Unlock Prime Savings & Free Delivery</p>
+                    <a href="{% url 'create_subscription' %}" class="bg-amber-500 hover:bg-amber-600 text-slate-950 px-3.5 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap">Join Prime</a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Pincode Checker -->
+        <div class="mb-5 p-3.5 bg-slate-50 border border-gray-200/80 rounded-2xl">
+            <label class="block font-bold text-[11px] text-gray-700 uppercase tracking-wider mb-2">📍 Check Delivery Pincode</label>
+            <div class="flex gap-2">
+                <input type="text" id="pincode-input" placeholder="Enter 6-digit Pincode" maxlength="6" class="flex-1 p-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold focus:outline-none focus:border-indigo-600">
+                <button type="button" onclick="checkPincodeDelivery()" class="bg-slate-900 hover:bg-indigo-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs cursor-pointer">Check</button>
+            </div>
+            <div id="pincode-result" class="mt-2 text-xs font-semibold hidden"></div>
+        </div>
+
+        <!-- Social Sharing Bar -->
+        <div class="mb-5 flex items-center justify-between p-3 bg-indigo-50/40 border border-indigo-100/60 rounded-2xl">
+            <span class="text-xs font-bold text-gray-700 flex items-center gap-1.5">🔗 Share Product:</span>
+            <div class="flex items-center gap-2">
+                <button onclick="shareOnWhatsApp()" class="w-8 h-8 rounded-xl bg-emerald-500 text-white font-bold text-xs flex items-center justify-center hover:bg-emerald-600 transition cursor-pointer" title="WhatsApp">WA</button>
+                <button onclick="shareOnTwitter()" class="w-8 h-8 rounded-xl bg-sky-500 text-white font-bold text-xs flex items-center justify-center hover:bg-sky-600 transition cursor-pointer" title="Twitter/X">X</button>
+                <button onclick="copyProductLink()" class="w-8 h-8 rounded-xl bg-slate-900 text-white font-bold text-xs flex items-center justify-center hover:bg-indigo-600 transition cursor-pointer" title="Copy Link">📋</button>
+            </div>
+        </div>
+
+        <hr class="border-gray-100 my-4">
+
+        <!-- Key Highlights -->
+        <div class="mb-5">
+            <h3 class="font-bold text-gray-900 text-xs uppercase tracking-wider mb-2.5 flex items-center gap-2">
+                <span class="w-1.5 h-4 bg-indigo-600 rounded-full"></span> Key Highlights
+            </h3>
+            <div class="grid grid-cols-2 gap-2">
+                <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center gap-2 text-xs font-semibold text-gray-700">
+                    <span class="text-indigo-600 text-sm">✨</span> Premium Finish
+                </div>
+                <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center gap-2 text-xs font-semibold text-gray-700">
+                    <span class="text-indigo-600 text-sm">🛡️</span> 1 Year Warranty
+                </div>
+            </div>
+        </div>
+
+        <!-- Technical Specifications Table -->
+        <div class="mb-5">
+            <h3 class="font-bold text-gray-900 text-xs uppercase tracking-wider mb-2.5 flex items-center gap-2">
+                <span class="w-1.5 h-4 bg-purple-600 rounded-full"></span> Technical Specifications
+            </h3>
+            <div class="border border-gray-200 rounded-2xl overflow-hidden text-xs bg-slate-50/50">
+                <table class="w-full text-left border-collapse">
+                    <tbody>
+                        <tr class="border-b border-gray-200">
+                            <td class="p-2.5 font-bold text-gray-600 bg-slate-100/70 w-1/3">Brand / Maker</td>
+                            <td class="p-2.5 font-semibold text-gray-900">{{ product.brand|default:"BloomCart Luxe" }}</td>
+                        </tr>
+                        <tr class="border-b border-gray-200">
+                            <td class="p-2.5 font-bold text-gray-600 bg-slate-100/70">Category</td>
+                            <td class="p-2.5 font-semibold text-gray-900">{{ product.category }}</td>
+                        </tr>
+                        <tr class="border-b border-gray-200">
+                            <td class="p-2.5 font-bold text-gray-600 bg-slate-100/70">Return Policy</td>
+                            <td class="p-2.5 font-semibold text-gray-900">7 Days Easy Replacement</td>
+                        </tr>
+                        <tr>
+                            <td class="p-2.5 font-bold text-gray-600 bg-slate-100/70">Shipping Type</td>
+                            <td class="p-2.5 font-semibold text-gray-900">Express Priority Delivery</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Action Bar -->
+        <div class="action-bar">
+            <form action="{% url 'add_to_cart_product' product.uniq_id %}" method="post" class="flex-1">
+                {% csrf_token %}
+                <button type="submit" class="btn-cart w-full text-xs uppercase tracking-wider cursor-pointer" {% if product.stock <= 0 %}disabled{% endif %}>
+                    {% if product.stock <= 0 %}Out of Stock{% else %}🛒 Add to Cart{% endif %}
+                </button>
+            </form>
+            <form action="{% url 'add_to_wishlist' product.uniq_id %}" method="POST">
+                {% csrf_token %}
+                <button type="submit" class="btn-wish text-base cursor-pointer" title="Wishlist">❤️</button>
+            </form>
+        </div>
+
+        <!-- Trust Badges & Accordions -->
+        <div class="space-y-2.5 pt-3 border-t border-gray-100">
+            <div class="border border-gray-200 rounded-2xl overflow-hidden bg-slate-50/50">
+                <button type="button" onclick="toggleAccordion('acc-policy')" class="w-full p-3 text-left font-bold text-xs text-gray-800 flex justify-between items-center cursor-pointer hover:bg-slate-100 transition">
+                    <span>🛡️ Return & Warranty Policy</span>
+                    <span id="icon-acc-policy">▼</span>
+                </button>
+                <div id="acc-policy" class="hidden px-3 pb-3 text-[11px] text-gray-600 leading-relaxed border-t border-gray-200 bg-white">
+                    This product is protected under our 7-day hassle-free return and replacement guarantee. Genuine manufacturer warranty included.
+                </div>
+            </div>
+            <div class="border border-gray-200 rounded-2xl overflow-hidden bg-slate-50/50">
+                <button type="button" onclick="toggleAccordion('acc-secure')" class="w-full p-3 text-left font-bold text-xs text-gray-800 flex justify-between items-center cursor-pointer hover:bg-slate-100 transition">
+                    <span>🔒 Secure Payment & Privacy</span>
+                    <span id="icon-acc-secure">▼</span>
+                </button>
+                <div id="acc-secure" class="hidden px-3 pb-3 text-[11px] text-gray-600 leading-relaxed border-t border-gray-200 bg-white">
+                    All transactions are 256-bit encrypted and secure. We support UPI, Credit/Debit cards, NetBanking, and Cash on Delivery.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Reviews Section -->
+    <div class="bg-white p-5 sm:p-6 rounded-3xl border border-gray-200/80 shadow-sm mobile-only-section">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h2 class="font-black text-lg text-gray-900 tracking-tight">💬 Customer Reviews</h2>
+                <p class="text-[11px] text-gray-400 mt-0.5">Verified purchaser feedback</p>
+            </div>
+            <span class="text-[11px] font-black bg-indigo-50 text-indigo-700 border border-indigo-100 px-3 py-1 rounded-full">
+                ⭐ {{ product.reviews.count|default:0 }} Total
+            </span>
+        </div>
+        
+        <div class="reviews-list-container space-y-3 min-h-[140px]"></div>
+        <div class="reviews-pagination flex items-center justify-between mt-4 pt-3.5 border-t border-gray-100"></div>
+        
+        {% if user.is_authenticated %}
+            <form method="post" action="{% url 'add_review' product.uniq_id %}" class="mt-5 pt-4 border-t border-dashed border-gray-200">
+                {% csrf_token %}
+                <h3 class="font-bold text-[11px] uppercase tracking-wider text-gray-800 mb-2.5">✍️ Share Your Experience</h3>
+                <div class="mb-2.5">
+                    <select name="rating" class="w-full p-3 border border-gray-200 rounded-2xl text-xs bg-slate-50 font-bold focus:outline-none focus:border-indigo-600">
+                        <option value="5">★★★★★ (5/5) - Outstanding Quality</option>
+                        <option value="4">★★★★☆ (4/5) - Very Good</option>
+                        <option value="3">★★★☆☆ (3/5) - Average</option>
+                        <option value="2">★★☆☆☆ (2/5) - Below Average</option>
+                        <option value="1">★☆☆☆☆ (1/5) - Poor</option>
+                    </select>
+                </div>
+                <textarea name="comment" required rows="2" placeholder="Tell us what you loved about this product..." class="w-full p-3 border border-gray-200 rounded-2xl mb-2.5 text-xs bg-slate-50 focus:outline-none focus:border-indigo-600"></textarea>
+                <button type="submit" class="bg-slate-900 hover:bg-indigo-600 text-white w-full py-3 rounded-2xl font-bold text-xs transition cursor-pointer shadow-md">Publish Review</button>
+            </form>
+        {% endif %}
+    </div>
+
+</div>
+
+<!-- ================= SIMILAR PRODUCTS SECTION ================= -->
+{% if similar_products %}
+<div class="max-w-[1320px] mx-auto px-6 mt-16 mb-24">
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h2 class="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">Similar Products You Might Like</h2>
+            <p class="text-xs text-gray-500 font-medium mt-0.5">Explore handpicked recommendations</p>
+        </div>
+        <div class="text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100 px-4 py-2 rounded-full">
+            ✨ {{ similar_products|length }} Items
+        </div>
+    </div>
+
+    <div class="similar-swiper-container">
+        <div class="swiper similarSwiper">
+            <div class="swiper-wrapper">
+                {% for sim_product in similar_products %}
+                <div class="swiper-slide h-auto">
+                    <div class="bg-white p-4 rounded-3xl border border-gray-200/80 hover:border-indigo-500 hover:shadow-xl transition flex flex-col justify-between h-full group">
+                        
+                        <!-- Card ka upper part click karne par product detail khulega -->
+                        <a href="{% url 'product_detail' sim_product.uniq_id %}" class="block flex-grow">
+                            <div class="h-44 bg-slate-50 rounded-2xl flex items-center justify-center p-3 mb-3 overflow-hidden">
+                                <img src="{{ sim_product.image_url|cut:' '|cut:'|' }}" class="h-full w-full object-contain group-hover:scale-110 transition duration-300">
+                            </div>
+                            <span class="text-[10px] font-extrabold text-indigo-500 uppercase tracking-widest truncate block">{{ sim_product.brand|default:"BloomCart" }}</span>
+                            <h3 class="font-bold text-xs text-gray-900 line-clamp-2 leading-snug group-hover:text-indigo-600 transition h-8 mt-1">
+                                {{ sim_product.product_title|escape }}
+                            </h3>
+                            <div class="mt-2">
+                                <span class="text-sm font-black text-gray-900">₹{{ sim_product.price }}</span>
+                            </div>
+                        </a>
+
+                        <!-- View button hata kar direct Add to Cart button lagaya gaya hai -->
+                        <div class="mt-4 pt-2 border-t border-gray-100">
+                            <form action="{% url 'add_to_cart_product' sim_product.uniq_id %}" method="POST">
+                                {% csrf_token %}
+                                <button type="submit" class="w-full py-2.5 bg-slate-900 hover:bg-indigo-600 text-white rounded-xl font-bold text-[11px] transition cursor-pointer text-center">
+                                    🛒 Add to Cart
+                                </button>
+                            </form>
+                        </div>
+
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="swiper-button-prev"></div>
+        <div class="swiper-button-next"></div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+    var rawUrls = "{{ product.image_url }}";
+    if (rawUrls) {
+        let firstImg = rawUrls.split('|')[0].trim();
+        let deskImg = document.getElementById('main-product-img-desk');
+        let mobImg = document.getElementById('main-product-img-mob');
+        if (deskImg) deskImg.src = firstImg;
+        if (mobImg) mobImg.src = firstImg;
+    }
+
+    function checkPincodeDelivery() {
+        const pin = document.getElementById('pincode-input').value.trim();
+        const resBox = document.getElementById('pincode-result');
+        resBox.classList.remove('hidden');
+        if (pin.length !== 6 || isNaN(pin)) {
+            resBox.className = "mt-2 text-xs font-semibold text-rose-600 bg-rose-50 p-2.5 rounded-xl border border-rose-100";
+            resBox.innerText = "❌ Please enter a valid 6-digit Indian pincode.";
+            return;
+        }
+        resBox.className = "mt-2 text-xs font-semibold text-emerald-600 bg-emerald-50 p-2.5 rounded-xl border border-emerald-100";
+        resBox.innerText = "✅ Express Delivery available! Estimated arrival: 2-3 business days.";
+    }
+
+    function shareOnWhatsApp() {
+        const url = encodeURIComponent(window.location.href);
+        const text = encodeURIComponent("Check out this amazing product: {{ product.product_title|escapejs }}");
+        window.open(`https://api.whatsapp.com/send?text=${text}%20${url}`, '_blank');
+    }
+
+    function shareOnTwitter() {
+        const url = encodeURIComponent(window.location.href);
+        const text = encodeURIComponent("Check out {{ product.product_title|escapejs }} on BloomCart!");
+        window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank');
+    }
+
+    function copyProductLink() {
+        navigator.clipboard.writeText(window.location.href);
+        alert("📋 Product link copied to clipboard!");
+    }
+
+    function toggleAccordion(id) {
+        const el = document.getElementById(id);
+        const icon = document.getElementById('icon-' + id);
+        if (el.classList.contains('hidden')) {
+            el.classList.remove('hidden');
+            icon.innerText = "▲";
+        } else {
+            el.classList.add('hidden');
+            icon.innerText = "▼";
+        }
+    }
+
+    const allReviews = [
+        {% for review in product.reviews.all %}
+        { username: "{{ review.user.username|escapejs }}", rating: {{ review.rating }}, comment: "{{ review.comment|escapejs }}" }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    let currentReviewPage = 1;
+    const reviewsPerPage = 2;
+
+    function renderReviews(page) {
+        currentReviewPage = page;
+        const containers = document.querySelectorAll('.reviews-list-container');
+        const paginationContainers = document.querySelectorAll('.reviews-pagination');
+
+        if (allReviews.length === 0) {
+            containers.forEach(container => {
+                container.innerHTML = `<p class="text-gray-400 text-xs italic text-center py-4">No reviews yet.</p>`;
+            });
+            paginationContainers.forEach(pc => pc.innerHTML = '');
+            return;
+        }
+
+        const startIndex = (page - 1) * reviewsPerPage;
+        const paginatedReviews = allReviews.slice(startIndex, startIndex + reviewsPerPage);
+
+        let html = '';
+        paginatedReviews.forEach(rev => {
+            let stars = '★'.repeat(rev.rating) + '☆'.repeat(5 - rev.rating);
+            html += `
+                <div class="bg-slate-50 p-3 rounded-2xl border border-gray-100">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="font-bold text-xs text-gray-900">${rev.username}</span>
+                        <div class="text-amber-500 text-xs">${stars}</div>
+                    </div>
+                    <p class="text-gray-600 text-xs italic">"${rev.comment}"</p>
+                </div>
+            `;
+        });
+
+        containers.forEach(container => container.innerHTML = html);
+
+        const totalPages = Math.ceil(allReviews.length / reviewsPerPage);
+        paginationContainers.forEach(paginationContainer => {
+            if (totalPages <= 1) {
+                paginationContainer.innerHTML = `<span class="text-[11px] text-gray-400">Showing all ${allReviews.length} reviews</span>`;
+                return;
+            }
+            let pagHtml = `<span class="text-[11px] text-gray-500 font-bold">Page ${page}/${totalPages}</span><div class="flex gap-1">`;
+            for (let p = 1; p <= totalPages; p++) {
+                pagHtml += `<button onclick="renderReviews(${p})" class="review-page-btn px-2.5 py-1 rounded-xl text-xs font-bold border ${p === page ? 'active bg-indigo-600 text-white' : 'bg-white text-gray-700'}">${p}</button>`;
+            }
+            paginationContainer.innerHTML = pagHtml + `</div>`;
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => renderReviews(1));
+
+    document.addEventListener("DOMContentLoaded", function() {
+        new Swiper(".similarSwiper", {
+            slidesPerView: 4,
+            spaceBetween: 20,
+            navigation: { nextEl: ".swiper-button-next", prevEl: ".swiper-button-prev" },
+            breakpoints: { 320: { slidesPerView: 1.2 }, 640: { slidesPerView: 2.2 }, 768: { slidesPerView: 3 }, 1024: { slidesPerView: 4 } }
+        });
+    });
+</script>
+{% endblock %}

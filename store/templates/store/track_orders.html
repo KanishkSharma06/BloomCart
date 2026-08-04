@@ -1,0 +1,34 @@
+{% extends 'store/base.html' %}
+{% block content %}
+<div class="max-w-4xl mx-auto py-10 px-4">
+    <h2 class="text-2xl font-black text-gray-900 mb-6">📦 Track Your Orders</h2>
+
+    {% if orders %}
+        <div class="space-y-4">
+            {% for order in orders %}
+            <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-2xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <span class="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">Order #{{ order.id }}</span>
+                    <h3 class="font-bold text-gray-900 mt-2">Placed on: {{ order.created_at|date:"d M Y" }}</h3>
+                    <p class="text-xs text-gray-500 mt-0.5">Total Amount: <strong class="text-gray-900">₹{{ order.total_price }}</strong></p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="px-3 py-1 rounded-xl text-xs font-bold 
+                        {% if order.status == 'Delivered' %} bg-emerald-50 text-emerald-600 border border-emerald-100
+                        {% elif order.status == 'Cancelled' %} bg-rose-50 text-rose-600 border border-rose-100
+                        {% else %} bg-amber-50 text-amber-600 border border-amber-100 {% endif %}">
+                        ● {{ order.status|default:"Processing" }}
+                    </span>
+                    <a href="{% url 'order_detail' order.id %}" class="bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-indigo-600 transition">View Details</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-16 bg-white rounded-2xl border border-gray-200">
+            <p class="text-gray-500 text-sm mb-4">You haven't placed any orders yet.</p>
+            <a href="{% url 'home' %}" class="bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-xs font-bold">Start Shopping</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

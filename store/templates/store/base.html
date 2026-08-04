@@ -1,0 +1,366 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BloomCart — Premium General Store</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Swiper CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    
+    <style>
+        /* Smooth Hover Dropdown */
+        .dropdown-content { 
+            display: none; 
+            margin-top: 8px; 
+        }
+        .user-menu:hover .dropdown-content,
+        .dropdown-content:hover { 
+            display: block; 
+        }
+        .user-menu::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            height: 15px; 
+            background: transparent;
+        }
+
+        /* Light Soft Background Style */
+        body {
+            background-color: #fefce8 !important; /* Soft Light Yellow */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: #18181b;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        /* Marquee Animation for Ticker Bar */
+        @keyframes marquee {
+            0% { transform: translateX(0%); }
+            100% { transform: translateX(-100%); }
+        }
+        @keyframes marquee2 {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(0%); }
+        }
+        .animate-marquee {
+            display: inline-block;
+            animation: marquee 30s linear infinite;
+        }
+        .animate-marquee2 {
+            display: inline-block;
+            animation: marquee2 30s linear infinite;
+        }
+
+        /* Typing Indicator Animation */
+        .typing-bubble {
+            display: inline-flex;
+            align-items: center;
+            padding: 10px 14px;
+            background: #ffffff;
+            border: 1px solid #fde047;
+            border-radius: 1rem;
+            margin: 5px 0;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        .typing-bubble span {
+            height: 7px;
+            width: 7px;
+            margin: 0 2px;
+            background-color: #71717a;
+            border-radius: 50%;
+            display: inline-block;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .typing-bubble span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-bubble span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- 1. PROFESSIONAL DARK HEADER / NAVBAR -->
+    <nav class="bg-black text-white shadow-2xl sticky top-0 z-50 border-b border-yellow-500/35">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3">
+            <div class="flex items-center justify-between gap-4">
+                
+                <!-- Logo & Mobile Menu Toggle -->
+                <div class="flex items-center gap-3">
+                    <button id="mobile-menu-btn" class="md:hidden text-yellow-400 hover:text-white focus:outline-none p-1">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+                        </svg>
+                    </button>
+                    <a href="{% url 'home' %}" class="text-2xl font-black tracking-tight text-yellow-400 flex items-center gap-1.5">
+                        BloomCart <span class="text-[10px] bg-yellow-500/20 text-yellow-300 border border-yellow-500/40 px-2 py-0.5 rounded-full font-extrabold uppercase tracking-widest">STORE</span>
+                    </a>
+                </div>
+                
+                <!-- Search Bar (Desktop) -->
+                <form action="{% url 'search_results' %}" method="GET" class="hidden md:flex flex-1 max-w-2xl mx-4">
+                    <div class="relative w-full flex">
+                        <input type="text" name="query" placeholder="Search for groceries, perfumes, skincare, apparel & more..." class="w-full px-4 py-2.5 rounded-l-xl text-white bg-zinc-900 border border-yellow-500/30 focus:outline-none focus:border-yellow-400 text-xs sm:text-sm font-medium placeholder-zinc-500">
+                        <button type="submit" class="px-6 bg-yellow-500 hover:bg-yellow-400 text-black font-extrabold rounded-r-xl transition text-xs sm:text-sm flex items-center justify-center shadow-md">
+                            🔍 Search
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Right Navigation Links -->
+                <div class="flex items-center gap-2 sm:gap-4">
+                    
+                    <!-- User Account Dropdown -->
+                    {% if user.is_authenticated %}
+                        <div class="user-menu relative hidden sm:block">
+                            <button class="px-3.5 py-2 border border-yellow-500/40 bg-zinc-900 text-yellow-400 rounded-xl hover:bg-zinc-800 transition text-xs font-bold flex items-center gap-1.5 shadow-sm">
+                                <span>👤 Hello, {{ user.username }}</span> ▾
+                            </button>
+                            
+                            <div class="dropdown-content absolute right-0 w-52 bg-zinc-900 text-zinc-200 border border-yellow-500/40 rounded-2xl shadow-2xl p-2 z-50">
+                                <a href="{% url 'user_profile' %}" class="block px-3 py-2 text-xs rounded-lg hover:bg-zinc-800 transition font-semibold text-zinc-300 hover:text-yellow-400">⚙️ Profile Settings</a>
+                                <a href="{% url 'wishlist' %}" class="block px-3 py-2 text-xs rounded-lg hover:bg-zinc-800 transition font-semibold text-zinc-300 hover:text-yellow-400">❤️ My Wishlist</a>
+                                <a href="{% url 'my_orders' %}" class="block px-3 py-2 text-xs rounded-lg hover:bg-zinc-800 transition font-semibold text-zinc-300 hover:text-yellow-400">📦 Order History</a>
+                                
+                                <div class="border-t border-zinc-800 my-1 pt-1">
+                                    <form method="post" action="{% url 'logout' %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="w-full text-left px-3 py-2 text-xs text-red-400 hover:bg-red-950/50 rounded-lg font-bold transition">
+                                            🚪 Logout Account
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="hidden sm:inline-flex px-4 py-2 border border-yellow-500 text-yellow-400 rounded-xl hover:bg-yellow-500 hover:text-black transition text-xs font-extrabold shadow-sm">
+                            Sign In
+                        </a>
+                    {% endif %}
+                    
+                    <!-- Cart Button -->
+                    <a href="{% url 'cart_detail' %}" class="relative px-3.5 py-2 bg-zinc-900 border border-yellow-500/30 text-yellow-400 rounded-xl hover:bg-zinc-800 transition text-xs font-bold flex items-center gap-1.5 shadow-sm">
+                        🛒 <span class="hidden sm:inline">Cart</span>
+                        {% if cart_count > 0 %}
+                            <span class="absolute -top-2 -right-2 bg-yellow-500 text-black text-[10px] font-black px-1.5 py-0.5 rounded-full shadow-md">{{ cart_count }}</span>
+                        {% endif %}
+                    </a>
+                </div>
+            </div>
+
+            <!-- Mobile Search Bar -->
+            <form action="{% url 'search_results' %}" method="GET" class="mt-3 md:hidden flex">
+                <input type="text" name="query" placeholder="Search products..." class="w-full px-3 py-2 rounded-l-lg text-white bg-zinc-900 border border-yellow-500/30 text-xs focus:outline-none">
+                <button type="submit" class="px-4 bg-yellow-500 text-black font-extrabold rounded-r-lg text-xs">Search</button>
+            </form>
+        </div>
+
+        <!-- Mobile Hidden Drawer Menu -->
+        <div id="mobile-drawer" class="hidden md:hidden bg-zinc-950 border-t border-zinc-800 px-4 py-3 space-y-2 text-xs">
+            {% if user.is_authenticated %}
+                <div class="text-yellow-400 font-bold px-2 py-1">Hello, {{ user.username }}</div>
+                <a href="{% url 'user_profile' %}" class="block px-2 py-1.5 text-zinc-300 hover:bg-zinc-900 rounded">Profile Settings</a>
+                <a href="{% url 'wishlist' %}" class="block px-2 py-1.5 text-zinc-300 hover:bg-zinc-900 rounded">Wishlist</a>
+                <a href="{% url 'my_orders' %}" class="block px-2 py-1.5 text-zinc-300 hover:bg-zinc-900 rounded">My Orders</a>
+                <form method="post" action="{% url 'logout' %}" class="pt-1">
+                    {% csrf_token %}
+                    <button type="submit" class="w-full text-left px-2 py-1.5 text-red-400 hover:bg-zinc-900 rounded font-bold">Logout</button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}" class="block px-2 py-2 text-yellow-400 font-bold">Sign In / Login</a>
+            {% endif %}
+        </div>
+
+        <!-- Moving Offer Ticker Bar -->
+        <div class="bg-yellow-500 text-black text-[11px] py-1.5 border-t border-yellow-400 overflow-hidden whitespace-nowrap font-black">
+            <div class="inline-block animate-marquee tracking-wider uppercase">
+                <span class="mx-6">🔥 Golden Mega Sale: Flat Offers on Skincare & Fragrances!</span>
+                <span class="mx-6">•</span>
+                <span class="mx-6">🚀 Fast Local Delivery – Stock Up Your Daily Essentials</span>
+                <span class="mx-6">•</span>
+                <span class="mx-6">⚡ Free Shipping on Orders Above ₹499!</span>
+            </div>
+            <div class="inline-block animate-marquee2 tracking-wider uppercase" aria-hidden="true">
+                <span class="mx-6">🔥 Golden Mega Sale: Flat Offers on Skincare & Fragrances!</span>
+                <span class="mx-6">•</span>
+                <span class="mx-6">🚀 Fast Local Delivery – Stock Up Your Daily Essentials</span>
+                <span class="mx-6">•</span>
+                <span class="mx-6">⚡ Free Shipping on Orders Above ₹499!</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 2. MESSAGES ALERT NOTIFICATIONS -->
+    {% if messages %}
+        <div class="max-w-4xl mx-auto mt-4 px-4">
+            {% for message in messages %}
+                <div class="p-4 mb-3 text-xs sm:text-sm rounded-xl shadow-lg border bg-yellow-100 border-yellow-400 text-yellow-900 font-semibold flex items-center justify-between">
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- 3. MAIN CONTENT AREA -->
+    <main class="flex-grow py-8 px-4 sm:px-6">
+        <div class="max-w-7xl mx-auto">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- 4. FLOATING CHATBOT ASSISTANT -->
+    <div id="chatbot-container" class="fixed bottom-6 right-6 z-50">
+        <button id="chatbot-toggle" class="bg-yellow-500 hover:bg-yellow-400 text-black w-12 h-12 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 text-xl font-bold">
+            💬
+        </button>
+
+        <div id="chatbot-box" class="hidden flex flex-col w-80 sm:w-96 h-[460px] bg-white rounded-2xl shadow-2xl border border-yellow-400 overflow-hidden absolute bottom-16 right-0">
+            <div class="bg-black text-white p-3.5 flex justify-between items-center border-b border-zinc-800">
+                <h3 class="font-bold text-xs flex items-center gap-1.5 text-yellow-400">🤖 BloomCart Assistant</h3>
+                <button id="chatbot-close" class="text-zinc-400 hover:text-white font-bold text-sm">✕</button>
+            </div>
+
+            <div id="chat-messages" class="flex-grow p-4 overflow-y-auto space-y-3 bg-yellow-50/50 text-xs sm:text-sm">
+                <div class="bg-white border border-yellow-300 text-zinc-800 p-3 rounded-2xl max-w-[85%] leading-relaxed shadow-sm">
+                    Hello! Welcome to BloomCart. Looking for groceries, perfumes, skincare, or general store items? Ask me anything!
+                </div>
+            </div>
+
+            <div class="p-3 bg-black border-t border-zinc-800 flex gap-2">
+                <input type="text" id="chat-input" placeholder="Type your query..." class="flex-grow border border-zinc-800 bg-zinc-900 text-white rounded-xl px-3 py-2 text-xs sm:text-sm focus:outline-none focus:border-yellow-400 placeholder-zinc-500">
+                <button id="chat-send" class="bg-yellow-500 hover:bg-yellow-400 text-black px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chatbot Script Logic -->
+    <script>
+        const toggleBtn = document.getElementById('chatbot-toggle');
+        const closeBtn = document.getElementById('chatbot-close');
+        const chatBox = document.getElementById('chatbot-box');
+        const sendBtn = document.getElementById('chat-send');
+        const chatInput = document.getElementById('chat-input');
+        const chatMessages = document.getElementById('chat-messages');
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileDrawer = document.getElementById('mobile-drawer');
+
+        toggleBtn.addEventListener('click', () => chatBox.classList.toggle('hidden'));
+        closeBtn.addEventListener('click', () => chatBox.classList.add('hidden'));
+        if(mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', () => mobileDrawer.classList.toggle('hidden'));
+        }
+
+        async function sendMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+
+            // Append user message
+            chatMessages.innerHTML += `<div class="bg-yellow-500 text-black font-semibold p-3 rounded-2xl max-w-[85%] ml-auto text-right shadow-sm">${message}</div>`;
+            chatInput.value = '';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            // Append typing indicator
+            const typingIndicatorId = 'typing-' + Date.now();
+            const typingHtml = `
+                <div id="${typingIndicatorId}" class="typing-bubble">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            `;
+            chatMessages.insertAdjacentHTML('beforeend', typingHtml);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            try {
+                const response = await fetch('/api/chatbot/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ message: message })
+                });
+
+                const data = await response.json();
+                
+                // Remove typing indicator
+                document.getElementById(typingIndicatorId)?.remove();
+
+                // Append bot reply
+                chatMessages.innerHTML += `<div class="bg-white border border-yellow-300 text-zinc-800 p-3 rounded-2xl max-w-[85%] whitespace-pre-line shadow-sm">${data.reply}</div>`;
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            } catch (error) {
+                // Remove typing indicator on error
+                document.getElementById(typingIndicatorId)?.remove();
+                chatMessages.innerHTML += `<div class="bg-red-100 text-red-600 p-3 rounded-2xl max-w-[85%] text-xs shadow-sm">Error connecting to assistant.</div>`;
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+    </script>
+
+    <!-- 5. PROFESSIONAL GENERAL STORE FOOTER -->
+    <footer class="bg-black text-zinc-400 pt-14 pb-8 border-t border-yellow-500/35 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-1 md:grid-cols-4 gap-8 mb-10 text-xs sm:text-sm">
+            
+            <div class="space-y-3">
+                <h2 class="text-xl font-black text-yellow-400 tracking-tight flex items-center gap-1.5">
+                    BloomCart 🌸
+                </h2>
+                <p class="text-zinc-500 text-xs leading-relaxed">
+                    Your premier everyday general store for exclusive fragrances, skincare, pantry staples, and luxury lifestyle essentials.
+                </p>
+            </div>
+
+            <div>
+                <h3 class="font-bold text-yellow-400 text-xs uppercase tracking-wider mb-3">Quick Navigation</h3>
+                <ul class="space-y-2 text-xs">
+                    <li><a href="{% url 'home' %}" class="hover:text-yellow-400 transition">Store Home</a></li>
+                    <li><a href="{% url 'cart_detail' %}" class="hover:text-yellow-400 transition">Shopping Cart</a></li>
+                    <li><a href="{% url 'wishlist' %}" class="hover:text-yellow-400 transition">My Wishlist</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h3 class="font-bold text-yellow-400 text-xs uppercase tracking-wider mb-3">Customer Support</h3>
+                <ul class="space-y-2 text-xs">
+                    <li><a href="{% url 'track_orders' %}" class="hover:text-yellow-400 transition">Track Orders</a></li>
+                    <li><a href="{% url 'user_profile' %}" class="hover:text-yellow-400 transition">Account Settings</a></li>
+                    <li><a href="{% url 'help_faq' %}" class="hover:text-yellow-400 transition">Help & FAQ</a></li>
+            </div>
+
+            <div>
+                <h3 class="font-bold text-yellow-400 text-xs uppercase tracking-wider mb-3">Secure Experience</h3>
+                <p class="text-zinc-500 text-xs mb-3">100% Secure payments and rapid express home deliveries.</p>
+                <div class="flex items-center gap-2 text-lg">
+                    <span>💳</span><span>🛡️</span><span>⚡</span><span>📦</span>
+                </div>
+            </div>
+
+        </div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 border-t border-zinc-900 pt-6 text-center text-xs text-zinc-600">
+            &copy; 2026 BloomCart General Store. All rights reserved.
+        </div>
+    </footer>
+
+    <!-- Swiper JS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+</body>
+</html>
