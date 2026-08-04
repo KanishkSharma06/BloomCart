@@ -40,7 +40,7 @@ from .models import (
 from .recommender import get_recommendations
 
 # LangChain & Gemini Imports
-from google import genai
+import google.generativeai as genai
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 
