@@ -3,7 +3,14 @@ import json
 import random
 import typesense
 import os
-import google.generativeai as genai
+import google.generativeai as gen
+import os
+
+# API key configure karein
+gen.configure(api_key=os.getenv("GEMINI_API_KEY"))
+
+# Model ko call karne ke liye yeh tarika use karein:
+model = gen.GenerativeModel('gemini-pro')
 
 from django.conf import settings
 from django.contrib import messages
