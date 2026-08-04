@@ -73,7 +73,21 @@ def get_razorpay_client():
   )
 
 
-gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+import os
+import google.generativeai as genai
+from django.conf import settings
+
+# Gemini API ko properly configure karein
+genai.configure(api_key=os.getenv("GEMINI_API_KEY") or getattr(settings, 'GEMINI_API_KEY', ''))
+
+def get_gemini_response(prompt):
+    try:
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        response = model.generate_content(prompt)
+        return response.text
+    except Exception as e:
+        print(f"Gemini Error: {e}")
+        return "Sorry, I am unable to process this request right now."
 
 # --- Products ---
 def home(request):
