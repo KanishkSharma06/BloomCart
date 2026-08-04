@@ -1,9 +1,10 @@
 import pandas as pd
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+
 from .models import Product  # Aapke Django Product model ke mutabiq
 
 def get_recommendations(product_id):
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.metrics.pairwise import cosine_similarity
     try:
         # Database se saare products fetch karein
         products = list(Product.objects.values('id', 'name', 'category', 'description'))
