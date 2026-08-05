@@ -689,10 +689,11 @@ import time
 import json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from langchain_ollama import ChatOllama
-from langchain_core.messages import HumanMessage
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_community.vectorstores import Chroma
+
+import json
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from store.models import Product  # Aapka Django model
 
 @csrf_exempt
 def rag_chatbot_view(request):
@@ -704,52 +705,65 @@ def rag_chatbot_view(request):
             if not user_query:
                 return JsonResponse({"reply": "Please ask a valid question."}, status=400)
 
-            # --- 1. Vector Search (k=6 to fetch more options like all chocolates) ---
-            embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-            vectorstore = Chroma(
-                persist_directory="./chroma_db", embedding_function=embeddings
-            )
-            docs = vectorstore.similarity_search(user_query, k=6)
+            ai_reply = None
 
-            if not docs:
-                return JsonResponse({"reply": "I couldn't find any matching items in our store right now. 😔"})
+            # --- Try Heavy AI/RAG Locally, fallback safely on Render to prevent RAM crash ---
+            try:
+                from langchain_huggingface import HuggingFaceEmbeddings
+                from langchain_chroma import Chroma
+                from langchain_ollama import ChatOllama
+                from langchain_core.messages import HumanMessage
 
-            # --- 2. Extract Context ---
-            context_list = []
-            for doc in docs:
-                title = doc.metadata.get("title", "Product")
-                price = doc.metadata.get("price", "N/A")
-                context_list.append(f"- {title} | Price: ₹{price}")
+                embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+                vectorstore = Chroma(
+                    persist_directory="./chroma_db", embedding_function=embeddings
+                )
+                docs = vectorstore.similarity_search(user_query, k=6)
 
-            context_text = "\n".join(context_list)
+                if docs:
+                    context_list = []
+                    for doc in docs:
+                        title = doc.metadata.get("title", "Product")
+                        price = doc.metadata.get("price", "N/A")
+                        context_list.append(f"- {title} | Price: ₹{price}")
 
-            # --- 3. Strict Prompt to list ALL retrieved products ---
-            prompt = f"""
-            You are a helpful and friendly e-commerce personal shopper assistant for BloomCart.
-            
-            Customer Query: "{user_query}"
-            
-            Available Store Products Retrieved:
-            {context_text}
-            
-            Instructions:
-            - Start with a warm, friendly greeting using emojis (e.g., 🍫, ✨).
-            - You MUST list ALL the products provided in the retrieved list above. Do not skip any item.
-            - Format each item neatly using bullet points with title and price (🏷️ / 💰).
-            - Keep descriptions short, crisp, and avoid unnecessary long paragraphs so it loads instantly.
-            """
+                    context_text = "\n".join(context_list)
 
-            # --- 4. Local Model Execution ---
-            llm = ChatOllama(model="phi3", temperature=0.1)
-            ai_message = llm.invoke([HumanMessage(content=prompt)])
-            ai_reply = ai_message.content
+                    prompt = f"""
+                    You are a helpful and friendly e-commerce personal shopper assistant for BloomCart.
+                    Customer Query: "{user_query}"
+                    Available Store Products Retrieved:
+                    {context_text}
+                    Instructions:
+                    - Start with a warm, friendly greeting using emojis (e.g., 🍫, ✨).
+                    - List ALL products provided above.
+                    - Format neatly using bullet points with title and price.
+                    """
+
+                    llm = ChatOllama(model="phi3", temperature=0.1)
+                    ai_message = llm.invoke([HumanMessage(content=prompt)])
+                    ai_reply = ai_message.content
+            except Exception:
+                # Agar Render par heavy AI load fail hua, toh yeh fallback chal jayega (Zero Crash!)
+                ai_reply = None
+
+            # --- Fallback to Django ORM Database Search if AI is unavailable ---
+            if not ai_reply:
+                products = Product.objects.filter(title__icontains=user_query)[:6]
+                if not products:
+                    return JsonResponse({"reply": "I couldn't find any matching items in our store right now. 😔"})
+
+                context_list = []
+                for product in products:
+                    context_list.append(f"- {product.title} | Price: ₹{product.price}")
+
+                context_text = "\n".join(context_list)
+                ai_reply = f"✨ Hello! Here are some items I found for you based on '{user_query}':\n\n{context_text}\n\n🛒 You can add them to your cart right away!"
 
             return JsonResponse({"reply": ai_reply})
 
         except Exception as e:
             return JsonResponse({"reply": f"Error: {str(e)}"}, status=500)
-
-    return JsonResponse({"error": "Invalid method"}, status=400)
 @login_required(login_url="/login/")
 def user_profile_view(request):
   user = request.user
