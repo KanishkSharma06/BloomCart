@@ -17,6 +17,7 @@ class Profile(models.Model):
         return self.user.username
 
 # --- Product & Variants ---
+# --- Product & Variants ---
 class Product(models.Model):
     uniq_id = models.CharField(max_length=255, primary_key=True)
     product_title = models.TextField() 
@@ -30,9 +31,8 @@ class Product(models.Model):
     quantity = models.TextField(blank=True, null=True)
     stock = models.IntegerField(default=10)
     category = models.CharField(max_length=100, default='General')
-    prime_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True) # Prime members ke liye sasta price
-    is_exclusive = models.BooleanField(default=False) # Sirf Prime users ke liye
-
+    prime_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    is_exclusive = models.BooleanField(default=False)
 
     def __str__(self):
         return self.product_title
@@ -44,12 +44,15 @@ class Product(models.Model):
         return 0
 
 class ProductVariant(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='variants')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='variants') # <-- Yahan se on_database hata diya hai
     color = models.CharField(max_length=50, blank=True, null=True)
     size = models.CharField(max_length=20, blank=True, null=True)
     stock = models.IntegerField(default=10)
     price_modifier = models.DecimalField(max_digits=10, decimal_places=2, default=0) 
-    
+
+    @property
+    def get_price(self):
+        return self.product.price + self.price_modifier
 
     def __str__(self):
         return f"{self.product.product_title} - {self.color} {self.size}"
@@ -122,18 +125,13 @@ class OrderItem(models.Model):
 
 class Address(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='addresses')
-    address_type = models.CharField(max_length=50, default='Home') # Home, Office, Personal
+    address_type = models.CharField(max_length=50, default='Home')
     full_name = models.CharField(max_length=100)
     phone = models.CharField(max_length=15)
     address_line = models.TextField()
     city = models.CharField(max_length=100, blank=True, null=True)
     pincode = models.CharField(max_length=10, blank=True, null=True)
     is_default = models.BooleanField(default=False)
-
-    @property
-    def get_price(self):
-        # Base product price mein modifier add ho jayega
-        return self.product.price + self.price_modifier
 
     def __str__(self):
         return f"{self.user.username} - {self.address_type}"
@@ -152,7 +150,7 @@ class SupportTicket(models.Model):
     
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='support_tickets')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    subject = models.CharField(max_length=200)
+    subject = models.CharField(max_length=200, blank=True, null=True)  # <-- Yahan blank=True, null=True add karein
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Open')
     created_at = models.DateTimeField(auto_now_add=True)
 

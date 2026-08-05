@@ -1,73 +1,102 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="utf-8">
+    <title>Invoice #{{ order.id }}</title>
     <style>
-        body { font-family: sans-serif; font-size: 13px; color: #333; }
-        .invoice-box { max-width: 800px; margin: auto; padding: 40px; border: 1px solid #eee; box-shadow: 0 0 10px rgba(0, 0, 0, 0.15); }
-        .header { text-align: center; border-bottom: 2px solid #1a365d; padding-bottom: 20px; margin-bottom: 20px; }
-        .bill-info { margin-bottom: 30px; }
-        table { width: 100%; border-collapse: collapse; }
-        th { background-color: #1a365d; color: white; text-align: left; padding: 10px; }
-        td { padding: 10px; border-bottom: 1px solid #eee; }
-        .total-area { margin-top: 20px; text-align: right; font-size: 16px; font-weight: bold; }
+        body { font-family: Helvetica, Arial, sans-serif; font-size: 11px; color: #222; line-height: 1.5; background-color: #ffffff; margin: 0; padding: 0; }
+        .invoice-container { width: 100%; max-width: 720px; margin: auto; padding: 25px; box-sizing: border-box; }
+        
+        /* Header Box */
+        .header-box { border: 1px solid #1a365d; margin-bottom: 25px; text-align: center; }
+        .company-title { font-size: 18px; font-weight: bold; color: #1a365d; padding: 12px 0; background: #fff; letter-spacing: 0.5px; }
+        .tagline-box { border-top: 1px solid #1a365d; padding: 10px 0; font-size: 11px; color: #333; background: #fff; }
+        
+        /* Bill To & Meta Section */
+        .info-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+        .info-table td { vertical-align: top; font-size: 11px; color: #222; }
+        
+        /* Items Table */
+        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 25px; border: 1px solid #cbd5e1; }
+        .items-table th { background-color: #1a365d; color: #fff; text-align: left; padding: 10px 12px; font-size: 11px; font-weight: bold; }
+        .items-table td { padding: 12px; border-bottom: 1px solid #cbd5e1; border-right: 1px solid #cbd5e1; font-size: 11px; color: #222; vertical-align: middle; }
+        .items-table td:last-child { border-right: none; }
+        .items-table tr:last-child td { border-bottom: none; }
+        
+        /* Grand Total Box */
+        .total-box { border: 1px solid #cbd5e1; padding: 15px 20px; text-align: right; font-size: 13px; font-weight: bold; color: #111; margin-bottom: 25px; }
+        
+        /* Footer Box */
+        .footer-box { border: 1px solid #cbd5e1; padding: 15px; text-align: center; font-size: 11px; color: #555; }
     </style>
 </head>
 <body>
-    <div class="invoice-box">
-        <!-- Header -->
-        <div class="header">
-            <h1 style="color: #1a365d; margin: 0;">BloomCart ✿</h1>
-            <p style="margin: 5px 0 0 0;">Your Trusted Grocery Partner</p>
+
+    <div class="invoice-container">
+        
+        <!-- Header Section -->
+        <div class="header-box">
+            <div class="company-title">BloomCart ✿</div>
+            <div class="tagline-box">Your Trusted Grocery Partner</div>
         </div>
 
-        <!-- Billing Info -->
-        <div class="bill-info">
-            <table style="border: none;">
-                <tr>
-                    <td style="border: none; width: 50%;">
-                        <strong>Bill To:</strong><br>
-                        {{ customer.first_name }} {{ customer.last_name }}<br>
-                        Email: {{ customer.email }}
-                    </td>
-                    <td style="border: none; text-align: right;">
-                        <strong>Invoice #:</strong> {{ order.id }}<br>
-                        <strong>Date:</strong> {{ order.created_at|date:"d M Y" }}<br>
-                        <strong>Status:</strong> {{ order.status }}
-                    </td>
-                </tr>
-            </table>
-        </div>
+        <!-- Bill To & Invoice Info Section -->
+        <table class="info-table">
+            <tr>
+                <td style="width: 55%;">
+                    <strong>Bill To:</strong><br><br>
+                    <strong>{{ customer.first_name }} {{ customer.last_name }}</strong><br>
+                    {% if order.address %}{{ order.address }}<br>{% endif %}
+                    Email: {{ customer.email }}<br>
+                    Phone: {{ order.phone|default:"N/A" }}
+                </td>
+                <td style="width: 45%; text-align: right;">
+                    <strong>Invoice #:</strong> {{ order.id }}<br>
+                    <strong>Date:</strong> {{ order.created_at|date:"d M Y" }}<br>
+                    <strong>Status:</strong> {{ order.status }}
+                </td>
+            </tr>
+        </table>
 
-        <!-- Products -->
-        <table>
+        <!-- Items Table -->
+        <table class="items-table">
             <thead>
                 <tr>
-                    <th>Product Name</th>
-                    <th>Qty</th>
-                    <th>Unit Price</th>
-                    <th>Total</th>
+                    <th style="width: 52%;">Product Name</th>
+                    <th style="width: 14%; text-align: center;">Qty</th>
+                    <th style="width: 17%; text-align: right;">Unit Price</th>
+                    <th style="width: 17%; text-align: right;">Total</th>
                 </tr>
             </thead>
             <tbody>
                 {% for item in order.items.all %}
                 <tr>
-                    <td>{{ item.product.product_title }}</td>
-                    <td>{{ item.quantity }}</td>
-                    <td>Rs. {{ item.price }}</td>
-                    <td>Rs. {% widthratio item.price 1 item.quantity %}</td>
+                    <td>
+                        {% if item.variant %}
+                            {{ item.variant.product.product_title }} ({{ item.variant.size }})
+                        {% else %}
+                            {{ item.product.product_title }}
+                        {% endif %}
+                    </td>
+                    <td style="text-align: center;">{{ item.quantity }}</td>
+                    <td style="text-align: right;">Rs. {{ item.price }}</td>
+                    <td style="text-align: right;">Rs. {% widthratio item.price 1 item.quantity %}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
 
-        <!-- Grand Total -->
-        <div class="total-area">
+        <!-- Grand Total Box -->
+        <div class="total-box">
             Grand Total: Rs. {{ grand_total }}
         </div>
 
-        <div style="margin-top: 50px; text-align: center; color: #888; font-size: 12px;">
-            <p>Thank you for shopping with BloomCart!</p>
+        <!-- Footer Box -->
+        <div class="footer-box">
+            Thank you for shopping with BloomCart!
         </div>
+
     </div>
+
 </body>
 </html>
