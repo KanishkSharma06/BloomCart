@@ -7,20 +7,18 @@ class StoreConfig(AppConfig):
     name = 'store'
 
     def ready(self):
-        # 1. Database entries aur products load karne ke liye
+        # Python 3.14 Context copy fix for Admin panel
         try:
-            from django.db import connection
-            # Sirf tab load karein agar table khali ho
-            if 'store_product' in connection.introspection.table_names():
-                from .models import Product
-                if not Product.objects.exists():
-                    json_path = os.path.join(os.path.dirname(__file__), '..', 'products.json')
-                    if os.path.exists(json_path):
-                        call_command('loaddata', json_path)
+            from django.template.context import Context
+            def new_copy(self):
+                dup = Context()
+                dup.dicts = [dict(d) for d in self.dicts]
+                return dup
+            Context.__copy__ = new_copy
         except Exception:
             pass
 
-        # Baaki database entries
+        # Database entries, Signals, aur Products Auto-load
         try:
             import store.signal
         except ImportError:
@@ -30,6 +28,7 @@ class StoreConfig(AppConfig):
             from django.contrib.sites.models import Site
             from allauth.socialaccount.models import SocialApp
             from django.contrib.auth.models import User
+            from django.db import connection
 
             site, created = Site.objects.get_or_create(
                 id=1, 
@@ -56,6 +55,14 @@ class StoreConfig(AppConfig):
 
             if not User.objects.filter(username='kanishk').exists():
                 User.objects.create_superuser('kanishk', 'kanishkmeenakshisharma06@gmail.com', 'kanishk@13')
+
+            # Products auto load from products.json
+            if 'store_product' in connection.introspection.table_names():
+                from .models import Product
+                if not Product.objects.exists():
+                    json_path = os.path.join(os.path.dirname(__file__), '..', 'products.json')
+                    if os.path.exists(json_path):
+                        call_command('loaddata', json_path)
 
         except Exception:
             pass
