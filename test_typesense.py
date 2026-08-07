@@ -2,7 +2,7 @@ import httpx
 
 # Use your host and key
 HOST = "fas0pie5tckr6g2hp-1.a2.typesense.net"
-API_KEY = "YOUR_ACTUAL_API_KEY_HERE" # Put your real API key here
+API_KEY = "dtOFl3ANkvNJr7DUrOAmIWTZO2AQSVNR" # Put your real API key here
 
 url = f"https://{HOST}:443/health"
 headers = {"X-TYPESENSE-API-KEY": API_KEY}

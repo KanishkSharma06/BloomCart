@@ -122,11 +122,11 @@ def signup(request):
             email = request.POST.get('email', '').strip()
             if not email:
                 messages.error(request, "Please enter a valid email address.")
-                return render(request, 'store/signup.html', {'otp_sent': False, 'email': ''})
+                return render(request, 'store/register.html', {'otp_sent': False, 'email': ''})
 
             if User.objects.filter(email=email, is_active=True).exists():
                 messages.error(request, "An account with this email already exists.")
-                return render(request, 'store/signup.html', {'otp_sent': False, 'email': ''})
+                return render(request, 'store/register.html', {'otp_sent': False, 'email': ''})
 
             otp_code = str(random.randint(100000, 999999))
             base_username = email.split('@')[0]
@@ -153,7 +153,7 @@ def signup(request):
             request.session['verify_user_id'] = temp_user.id
 
             messages.success(request, "OTP has been sent to your email! Please check your inbox.")
-            return redirect('signup')
+            return redirect('register')
 
         elif action == 'register':
             entered_otp = request.POST.get('otp', '').strip()
@@ -164,7 +164,7 @@ def signup(request):
 
             if not user_id:
                 messages.error(request, "Session expired. Please start again.")
-                return redirect('signup')
+                return redirect('register')
 
             try:
                 temp_user = User.objects.get(id=user_id)
@@ -174,7 +174,7 @@ def signup(request):
                     if new_username and new_username != temp_user.username:
                         if User.objects.filter(username=new_username).exists():
                             messages.error(request, "This username is already taken. Please choose another.")
-                            return render(request, 'store/signup.html', {'otp_sent': True, 'email': email})
+                            return render(request, 'store/register.html', {'otp_sent': True, 'email': email})
                         temp_user.username = new_username
                     
                     temp_user.set_password(password)
@@ -195,7 +195,7 @@ def signup(request):
 
             otp_sent = True
 
-    return render(request, 'store/signup.html', {'otp_sent': otp_sent, 'email': email})
+    return render(request, 'store/register.html', {'otp_sent': otp_sent, 'email': email})
 
 
 def otp_verify(request):
