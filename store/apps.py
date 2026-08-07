@@ -18,7 +18,6 @@ class StoreConfig(AppConfig):
         except Exception:
             pass
 
-        # Database entries, Signals, aur Products Auto-load
         try:
             import store.signal
         except ImportError:
@@ -56,11 +55,14 @@ class StoreConfig(AppConfig):
             if not User.objects.filter(username='kanishk').exists():
                 User.objects.create_superuser('kanishk', 'kanishkmeenakshisharma06@gmail.com', 'kanishk@13')
 
-            # Products auto load from products.json
+            # Improved path detection for products.json
             if 'store_product' in connection.introspection.table_names():
                 from .models import Product
                 if not Product.objects.exists():
-                    json_path = os.path.join(os.path.dirname(__file__), '..', 'products.json')
+                    # Base directory (jahan manage.py hai)
+                    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                    json_path = os.path.join(base_dir, 'products.json')
+                    
                     if os.path.exists(json_path):
                         call_command('loaddata', json_path)
 
