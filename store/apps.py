@@ -55,16 +55,20 @@ class StoreConfig(AppConfig):
             if not User.objects.filter(username='kanishk').exists():
                 User.objects.create_superuser('kanishk', 'kanishkmeenakshisharma06@gmail.com', 'kanishk@13')
 
-            # Improved path detection for products.json
+            # Exact path for products.json in main root folder (where manage.py is)
             if 'store_product' in connection.introspection.table_names():
                 from .models import Product
                 if not Product.objects.exists():
-                    # Base directory (jahan manage.py hai)
-                    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                    # store/apps.py se 2 level upar main root folder par jaane ke liye
+                    current_dir = os.path.dirname(os.path.abspath(__file__)) # Yeh 'store' folder hai
+                    base_dir = os.path.dirname(current_dir) # Yeh main root folder hai jahan manage.py hai
                     json_path = os.path.join(base_dir, 'products.json')
                     
                     if os.path.exists(json_path):
                         call_command('loaddata', json_path)
+                        print("Successfully loaded products.json!")
+                    else:
+                        print(f"products.json not found at: {json_path}")
 
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"Error during app ready: {e}")
