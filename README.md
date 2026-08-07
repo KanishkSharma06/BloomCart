@@ -55,7 +55,7 @@ python manage.py migrate
 6. Run the Development Server
 Bash
 python manage.py runserver
-Open your browser and visit: http://127.0.0.1:8000/
+Open your browser and visit: https://bloomcart-30cs.onrender.com/
 👨‍💻 Author
 Kanishk Sharma
 
