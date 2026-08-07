@@ -1,22 +1,22 @@
 from django.apps import AppConfig
 import os
+from django.core.management import call_command
 
 class StoreConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'store'
 
     def ready(self):
-        # Python 3.14 safe context copy fix
+        # 1. Database entries aur products load karne ke liye
         try:
-            from django.template.context import Context
-            if hasattr(Context, '__copy__'):
-                def patched_copy(self):
-                    dup = object.__new__(self.__class__)
-                    dup.__dict__.update(self.__dict__)
-                    if hasattr(self, 'dicts'):
-                        dup.dicts = list(self.dicts)
-                    return dup
-                Context.__copy__ = patched_copy
+            from django.db import connection
+            # Sirf tab load karein agar table khali ho
+            if 'store_product' in connection.introspection.table_names():
+                from .models import Product
+                if not Product.objects.exists():
+                    json_path = os.path.join(os.path.dirname(__file__), '..', 'products.json')
+                    if os.path.exists(json_path):
+                        call_command('loaddata', json_path)
         except Exception:
             pass
 
