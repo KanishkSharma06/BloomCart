@@ -6,24 +6,21 @@ class StoreConfig(AppConfig):
     name = 'store'
 
     def ready(self):
-        # Python 3.14 + Django template context fix for Admin panel
+        # Python 3.14 safe context copy fix
         try:
             from django.template.context import Context
             if hasattr(Context, '__copy__'):
-                orig_copy = Context.__copy__
                 def patched_copy(self):
-                    try:
-                        return orig_copy(self)
-                    except AttributeError:
-                        # Fallback copy method for Python 3.14 compatibility
-                        dup = self.__class__()
+                    dup = object.__new__(self.__class__)
+                    dup.__dict__.update(self.__dict__)
+                    if hasattr(self, 'dicts'):
                         dup.dicts = list(self.dicts)
-                        return dup
+                    return dup
                 Context.__copy__ = patched_copy
         except Exception:
             pass
 
-        # Baaki purana code (Signals, Site, SocialApp, Superuser)
+        # Baaki database entries
         try:
             import store.signal
         except ImportError:
