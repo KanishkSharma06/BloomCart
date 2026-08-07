@@ -6,19 +6,34 @@ class StoreConfig(AppConfig):
     name = 'store'
 
     def ready(self):
-        # 1. Signals ko load karein
+        # Python 3.14 + Django template context fix for Admin panel
         try:
-            import store.signal  # ya 'store.signals' agar file ka naam plural hai
+            from django.template.context import Context
+            if hasattr(Context, '__copy__'):
+                orig_copy = Context.__copy__
+                def patched_copy(self):
+                    try:
+                        return orig_copy(self)
+                    except AttributeError:
+                        # Fallback copy method for Python 3.14 compatibility
+                        dup = self.__class__()
+                        dup.dicts = list(self.dicts)
+                        return dup
+                Context.__copy__ = patched_copy
+        except Exception:
+            pass
+
+        # Baaki purana code (Signals, Site, SocialApp, Superuser)
+        try:
+            import store.signal
         except ImportError:
             pass
 
-        # 2. Database entries (Site, SocialApp, Superuser)
         try:
             from django.contrib.sites.models import Site
             from allauth.socialaccount.models import SocialApp
             from django.contrib.auth.models import User
 
-            # Site ID 1 ensure karein
             site, created = Site.objects.get_or_create(
                 id=1, 
                 defaults={'domain': 'bloomcart-30cs.onrender.com', 'name': 'BloomCart'}
@@ -27,22 +42,21 @@ class StoreConfig(AppConfig):
                 site.domain = 'bloomcart-30cs.onrender.com'
                 site.save()
 
-            # Google SocialApp ensure karein (DoesNotExist error fix karne ke liye)
-            client_id = os.getenv('GOOGLE_CLIENT_ID', 'dummy_client_id')
-            secret = os.getenv('GOOGLE_SECRET', 'dummy_secret')
+            client_id = os.getenv('GOOGLE_CLIENT_ID', '')
+            secret = os.getenv('GOOGLE_SECRET', '')
             
-            app, app_created = SocialApp.objects.get_or_create(
-                provider='google',
-                defaults={
-                    'name': 'Google',
-                    'client_id': client_id,
-                    'secret': secret,
-                }
-            )
-            if not app.sites.filter(id=site.id).exists():
-                app.sites.add(site)
+            if client_id and secret:
+                app, app_created = SocialApp.objects.update_or_create(
+                    provider='google',
+                    defaults={
+                        'name': 'Google',
+                        'client_id': client_id,
+                        'secret': secret,
+                    }
+                )
+                if not app.sites.filter(id=site.id).exists():
+                    app.sites.add(site)
 
-            # Superuser ensure karein
             if not User.objects.filter(username='kanishk').exists():
                 User.objects.create_superuser('kanishk', 'kanishkmeenakshisharma06@gmail.com', 'kanishk@13')
 
